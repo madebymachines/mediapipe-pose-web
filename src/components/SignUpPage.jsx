@@ -101,23 +101,45 @@ const SignUpPage = ({ onSubmit, onGoToSignIn }) => {
         <label className="text-xs text-white font-bold mb-1 block mt-1">
           SOCIAL MEDIA USERNAME
         </label>
-        <div className="flex gap-2 mb-3">
+        <div className="mb-3 space-y-2 sm:space-y-0">
           <select
             name="social_media_type"
             value={form.social_media_type}
             onChange={handleChange}
-            className="w-24 border-2 border-white bg-transparent rounded-md text-white px-2 py-2 outline-none font-semibold text-xs focus:ring-2 focus:ring-white transition"
+            className="w-full sm:hidden border-2 border-white bg-transparent rounded-md text-white px-4 py-2 outline-none font-semibold text-sm focus:ring-2 focus:ring-white transition"
           >
-            <option value="" className="bg-purple-600">Select</option>
+            <option value="" className="bg-purple-600">Select Social Media Platform</option>
             <option value="instagram" className="bg-purple-600">Instagram</option>
             <option value="tiktok" className="bg-purple-600">TikTok</option>
           </select>
+          
+          <div className="hidden sm:flex gap-2">
+            <select
+              name="social_media_type"
+              value={form.social_media_type}
+              onChange={handleChange}
+              className="w-32 border-2 border-white bg-transparent rounded-md text-white px-2 py-2 outline-none font-semibold text-sm focus:ring-2 focus:ring-white transition"
+            >
+              <option value="" className="bg-purple-600">Select</option>
+              <option value="instagram" className="bg-purple-600">Instagram</option>
+              <option value="tiktok" className="bg-purple-600">TikTok</option>
+            </select>
+            <input
+              name="social_media_username"
+              placeholder="@johnsmith"
+              value={form.social_media_username}
+              onChange={handleChange}
+              className="flex-1 border-2 border-white bg-transparent rounded-md text-white px-4 py-2 outline-none font-semibold tracking-wider focus:ring-2 focus:ring-white transition placeholder:text-white/70"
+              autoComplete="off"
+            />
+          </div>
+          
           <input
             name="social_media_username"
             placeholder="@johnsmith"
             value={form.social_media_username}
             onChange={handleChange}
-            className="flex-1 border-2 border-white bg-transparent rounded-md text-white px-4 py-2 outline-none font-semibold tracking-wider focus:ring-2 focus:ring-white transition placeholder:text-white/70"
+            className="w-full sm:hidden border-2 border-white bg-transparent rounded-md text-white px-4 py-2 outline-none font-semibold tracking-wider focus:ring-2 focus:ring-white transition placeholder:text-white/70"
             autoComplete="off"
           />
         </div>
