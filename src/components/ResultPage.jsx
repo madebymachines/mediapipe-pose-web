@@ -10,21 +10,25 @@ import {
 } from "@heroicons/react/24/outline";
 import axios from "axios";
 
-const ResultPage = ({ song, user, onBack }) => {
+const ResultPage = ({ song, user, onBack, onLogout }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState(false);
   const [videoStatus, setVideoStatus] = useState(null);
-  const [isDownloading, setIsDownloading] = useState(false); // 🔥 NEW: Track download state
-  const [videoBlob, setVideoBlob] = useState(null); // 🔥 NEW: Store downloaded video blob
+  const [isDownloading, setIsDownloading] = useState(false); 
+  const [videoBlob, setVideoBlob] = useState(null); 
   const audioRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   const retryCountRef = useRef(0);
   const lastRequestTimeRef = useRef(0);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const handleLogout = () => {
+    onLogout();
+  };
 
   // Update time display
   useEffect(() => {
@@ -307,6 +311,14 @@ const ResultPage = ({ song, user, onBack }) => {
 
   return (
     <>
+      <button
+        onClick={handleLogout}
+        className="fixed top-4 right-4 z-50 bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full border border-white/30 hover:bg-white/30 transition-all duration-200 shadow-lg text-sm font-medium"
+        title={`Logout ${user.name}`}
+      >
+        Logout
+      </button>
+
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
@@ -315,18 +327,30 @@ const ResultPage = ({ song, user, onBack }) => {
       />
 
       {/* Chevron + Logo */}
-      <div className="w-full flex items-center justify-between my-6 px-2">
-        <button className="p-1" onClick={onBack} aria-label="Back">
-          <ChevronLeftIcon className="w-7 h-7 text-white hover:opacity-80" />
-        </button>
-        <img
-          src={logo}
-          alt="Acer Intel"
-          className="w-48 md:w-56"
-          draggable="false"
-          style={{ objectFit: "contain" }}
-        />
-        <span className="w-7" />
+      <div className="w-full flex items-center justify-between my-6 px-4">
+        <div className="w-16 flex justify-start">
+          <button className="p-1" onClick={onBack} aria-label="Back">
+            <ChevronLeftIcon className="w-7 h-7 text-white hover:opacity-80" />
+          </button>
+        </div>
+        <div className="flex-1 flex justify-center">
+          <img
+            src={logo}
+            alt="Acer Intel"
+            className="w-48 md:w-56"
+            draggable="false"
+            style={{ objectFit: "contain" }}
+          />
+        </div>
+        <div className="w-16 flex justify-end">
+          <button
+            onClick={handleLogout}
+            className="text-white text-sm font-medium hover:text-white/80 transition-colors hover:bg-white/10 p-2 rounded-lg" 
+            title={`Logout ${user.name}`}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Song Cover */}

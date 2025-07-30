@@ -20,7 +20,7 @@ const StartScreen = ({ onStart }) => (
       <img
         src={eventLogo}
         alt="Acer Day 2025"
-        className="w-48 md:w-56"
+        className="w-48 md:w-56 -mt-20"
         draggable="false"
         style={{ objectFit: "contain" }}
       />
@@ -33,7 +33,7 @@ const StartScreen = ({ onStart }) => (
     <div className="w-full flex justify-center mb-8">
       <button
         onClick={onStart}
-        className="w-[90%] py-2 border-2 border-white hover:text-white rounded-md text-white font-bold text-lg tracking-widest transition active:scale-95 hover:text-black"
+        className="w-[90%] -mt-10 py-2 border-2 border-white hover:text-white rounded-md text-white font-bold text-lg tracking-widest transition active:scale-95 hover:text-black"
         style={{
           background: "transparent",
         }}

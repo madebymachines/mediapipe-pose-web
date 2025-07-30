@@ -1,3 +1,4 @@
+// App.jsx
 import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import StartScreen from "./components/StartScreen";
@@ -31,6 +32,8 @@ function App() {
   });
   const [warningData, setWarningData] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  // 🔥 Add logout state to force StartScreen
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -47,40 +50,58 @@ function App() {
     sessionStorage.setItem("songForm", JSON.stringify(songForm));
   }, [songForm]);
 
-  // 🔥 FIXED: Handle initial page load with proper StartScreen logic
+  // 🔥 FIXED: Handle initial page load for HashRouter
   useEffect(() => {
+    console.log('🔍 Current location:', location.pathname);
+    console.log('👤 User state:', !!user);
+    console.log('🚪 Is logged out:', isLoggedOut);
+    console.log('👋 Has visited:', !!sessionStorage.getItem("hasVisited"));
+    
     const currentPath = location.pathname;
     const hasVisited = sessionStorage.getItem("hasVisited");
     
-    // Show StartScreen only on first visit to root path
-    if (currentPath === "/" && !hasVisited && !user) {
-      // StartScreen will be shown by the Route
+    // 🔥 PRIORITY 1: If user just logged out, stay on StartScreen
+    if (isLoggedOut) {
+      console.log('🔥 User logged out, staying on StartScreen');
+      if (currentPath !== '/') {
+        navigate('/', { replace: true });
+      }
       return;
     }
     
-    // If user is not logged in and trying to access protected routes
+    // 🔥 PRIORITY 2: If first-time visitor and no user, show StartScreen
+    if (currentPath === "/" && !hasVisited && !user) {
+      console.log('👋 First-time visitor, showing StartScreen');
+      return;
+    }
+    
+    // 🔥 PRIORITY 3: Protect routes that require authentication
     if (!user && ['/description', '/loading', '/result'].includes(currentPath)) {
+      console.log('🔒 Protected route, redirecting to signin');
       navigate('/signin', { replace: true });
       return;
     }
     
-    // If user is logged in and on root path, redirect to description
+    // 🔥 PRIORITY 4: If user exists and on home, go to description
     if (user && currentPath === '/') {
+      console.log('👤 User exists, redirecting to description');
       navigate('/description', { replace: true });
       return;
     }
     
-    // If user exists but on signin/signup, redirect to description
+    // 🔥 PRIORITY 5: If user exists but on signin/signup, go to description
     if (user && ['/signin', '/signup'].includes(currentPath)) {
+      console.log('👤 User exists on auth page, redirecting to description');
       navigate('/description', { replace: true });
       return;
     }
-  }, [user, location.pathname, navigate]);
+  }, [user, location.pathname, navigate, isLoggedOut]);
 
   const handleRegister = async (userData) => {
     try {
       const res = await axios.post(`${backendUrl}/register`, userData);
       setUser(res.data.result);
+      setIsLoggedOut(false); // Reset logout state
       toast.success("Registration successful!");
       navigate('/description');
     } catch (err) {
@@ -96,6 +117,7 @@ function App() {
     try {
       const res = await axios.post(`${backendUrl}/signin`, userData);
       setUser(res.data.result);
+      setIsLoggedOut(false); // Reset logout state
       if (res.data.result.token) {
         sessionStorage.setItem("token", res.data.result.token);
       }
@@ -108,6 +130,34 @@ function App() {
         toast.error("Failed to sign in");
       }
     }
+  };
+
+  // 🔥 ENHANCED: Logout function with forced StartScreen
+  const handleLogout = () => {
+    console.log('🚪 Logout initiated');
+    
+    // Clear all states
+    setUser(null);
+    setSong({});
+    setSongForm({ title: "", theme: "" });
+    setIsGenerating(false);
+    setWarningData(null);
+    
+    // 🔥 CRITICAL: Set logout flag FIRST
+    setIsLoggedOut(true);
+    
+    // Clear sessionStorage (including hasVisited)
+    sessionStorage.clear();
+    
+    console.log('🧹 Session cleared, isLoggedOut set to true');
+    
+    // Show success message
+    toast.success("Logged out successfully!");
+    
+    // 🔥 Force navigation to home (will show StartScreen due to isLoggedOut flag)
+    navigate('/', { replace: true });
+    
+    console.log('🏠 Navigated to home route');
   };
 
   const handleGenerateSong = async (songData) => {
@@ -206,15 +256,6 @@ function App() {
     navigate('/description');
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setSong({});
-    setSongForm({ title: "", theme: "" });
-    setIsGenerating(false);
-    sessionStorage.clear();
-    navigate('/signin');
-  };
-
   const handleBackFromApiUsage = () => {
     if (user) {
       navigate('/description');
@@ -232,10 +273,54 @@ function App() {
     }
   };
 
-  // 🔥 NEW: Handle StartScreen completion
+  // 🔥 ENHANCED: StartScreen completion
   const handleStartComplete = () => {
+    console.log('🚀 StartScreen completed');
     sessionStorage.setItem("hasVisited", "true");
+    setIsLoggedOut(false); // Reset logout state
     navigate('/signin');
+  };
+
+  // 🔥 ENHANCED: Determine what to show on home route
+  const getHomeElement = () => {
+    const hasVisited = sessionStorage.getItem("hasVisited");
+    
+    console.log('🏠 Determining home element:', {
+      isLoggedOut,
+      hasVisited: !!hasVisited,
+      user: !!user
+    });
+    
+    // 🔥 Show StartScreen if logged out OR first-time visitor
+    if (isLoggedOut || (!hasVisited && !user)) {
+      console.log('📱 Showing StartScreen');
+      return <StartScreen onStart={handleStartComplete} />;
+    }
+    
+    // Show user dashboard if logged in
+    if (user) {
+      console.log('👤 Showing SongDescription for logged-in user');
+      return (
+        <SongDescription
+          user={user}
+          form={songForm}
+          setForm={setSongForm}
+          onGenerate={handleGenerateSong}
+          onLogout={handleLogout}
+          onApiUsage={() => navigate('/api-call')}
+          isGenerating={isGenerating}
+        />
+      );
+    }
+    
+    // Default to signin for visitors who have been here before
+    console.log('🔑 Showing SignInPage for returning visitor');
+    return (
+      <SignInPage 
+        onSubmit={handleSignIn} 
+        onGoToSignUp={() => navigate('/signup')}
+      />
+    );
   };
 
   return (
@@ -248,32 +333,11 @@ function App() {
       }}
     >
       <Routes>
-        {/* 🔥 FIXED: StartScreen Route - Only for first-time visitors */}
         <Route 
           path="/" 
-          element={
-            !sessionStorage.getItem("hasVisited") && !user ? (
-              <StartScreen onStart={handleStartComplete} />
-            ) : user ? (
-              <SongDescription
-                user={user}
-                form={songForm}
-                setForm={setSongForm}
-                onGenerate={handleGenerateSong}
-                onBack={handleLogout}
-                onApiUsage={() => navigate('/api-call')}
-                isGenerating={isGenerating}
-              />
-            ) : (
-              <SignInPage 
-                onSubmit={handleSignIn} 
-                onGoToSignUp={() => navigate('/signup')}
-              />
-            )
-          } 
+          element={getHomeElement()} 
         />
 
-        {/* Public Routes */}
         <Route 
           path="/signup" 
           element={
@@ -294,13 +358,11 @@ function App() {
           } 
         />
 
-        {/* 🔥 PUBLIC API-CALL ROUTE */}
         <Route 
           path="/api-call" 
           element={<ApiUsagePage onBack={handleBackFromApiUsage} />} 
         />
 
-        {/* Protected Routes */}
         <Route 
           path="/description" 
           element={
@@ -310,7 +372,7 @@ function App() {
                 form={songForm}
                 setForm={setSongForm}
                 onGenerate={handleGenerateSong}
-                onBack={handleLogout}
+                onLogout={handleLogout}
                 onApiUsage={() => navigate('/api-call')}
                 isGenerating={isGenerating}
               />
@@ -331,7 +393,12 @@ function App() {
           path="/result" 
           element={
             <ProtectedRoute user={user}>
-              <ResultPage song={song} user={user} onBack={handleBackFromResult} />
+              <ResultPage 
+                song={song} 
+                user={user} 
+                onBack={handleBackFromResult}
+                onLogout={handleLogout}
+              />
             </ProtectedRoute>
           } 
         />
@@ -352,7 +419,6 @@ function App() {
           } 
         />
 
-        {/* 🔥 CATCH-ALL: Handle any other routes */}
         <Route 
           path="*" 
           element={
@@ -362,7 +428,7 @@ function App() {
                 form={songForm}
                 setForm={setSongForm}
                 onGenerate={handleGenerateSong}
-                onBack={handleLogout}
+                onLogout={handleLogout}
                 onApiUsage={() => navigate('/api-call')}
                 isGenerating={isGenerating}
               />
