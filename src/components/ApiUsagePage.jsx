@@ -228,7 +228,7 @@ const ApiUsagePage = ({ onBack }) => {
 
           {/* Moderation Stats */}
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <h2 className="text-xl font-bold text-white">Song API</h2>
+            <h2 className="text-xl font-bold text-white">Moderation API</h2>
             <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-white/90">
                     <span>Moderation Usage:</span>
