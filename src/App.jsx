@@ -325,7 +325,7 @@ function App() {
 
   return (
     <div
-      className="w-full h-screen flex flex-col items-center"
+      className="w-full min-h-screen flex flex-col items-center"
       style={{
         background: "linear-gradient(180deg, #C330EB 0%, #191BE0 100%)",
         maxWidth: 430,
