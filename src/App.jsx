@@ -1,4 +1,4 @@
-// App.jsx - Updated with Enhanced Error Handling for Moderation
+// App.jsx
 import React, { useState, useEffect } from "react";
 import StartScreen from "./components/StartScreen";
 import SignUpPage from "./components/SignUpPage";
