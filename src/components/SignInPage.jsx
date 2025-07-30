@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
 
 const SignInPage = ({ onSubmit, onGoToSignUp }) => {
@@ -11,14 +12,17 @@ const SignInPage = ({ onSubmit, onGoToSignUp }) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/description';
+
+   const handleSubmit = async () => {
     // Validation
     if (!form.email || !form.password) {
       alert("Please fill all required fields");
       return;
     }
 
-    onSubmit(form);
+    await onSubmit(form, from);
   };
 
   const handleKeyPress = (e) => {
