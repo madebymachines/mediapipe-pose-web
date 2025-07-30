@@ -324,147 +324,159 @@ function App() {
   };
 
   return (
-    <div
-      className="w-full min-h-screen flex flex-col items-center"
-      style={{
-        background: "linear-gradient(180deg, #C330EB 0%, #191BE0 100%)",
-        maxWidth: 430,
-        margin: "0 auto",
-      }}
-    >
-      <Routes>
-        <Route 
-          path="/" 
-          element={getHomeElement()} 
-        />
+    <>
+      {/* 🔥 FULL SCREEN BACKGROUND - Only visible on desktop */}
+      <div
+        className="fixed inset-0 w-full h-full"
+        style={{
+          background: "linear-gradient(180deg, #C330EB 0%, #191BE0 100%)",
+          zIndex: -1
+        }}
+      />
+      
+      {/* 🔥 MAIN CONTAINER - Centered with max width */}
+      <div
+        className="w-full min-h-screen flex flex-col items-center relative"
+        style={{
+          background: "linear-gradient(180deg, #C330EB 0%, #191BE0 100%)",
+          maxWidth: 430,
+          margin: "0 auto",
+        }}
+      >
+        <Routes>
+          <Route 
+            path="/" 
+            element={getHomeElement()} 
+          />
 
-        <Route 
-          path="/signup" 
-          element={
-            <SignUpPage 
-              onSubmit={handleRegister} 
-              onGoToSignIn={() => navigate('/signin')}
-            />
-          } 
-        />
-        
-        <Route 
-          path="/signin" 
-          element={
-            <SignInPage 
-              onSubmit={handleSignIn} 
-              onGoToSignUp={() => navigate('/signup')}
-            />
-          } 
-        />
-
-        <Route 
-          path="/api-call" 
-          element={<ApiUsagePage onBack={handleBackFromApiUsage} />} 
-        />
-
-        <Route 
-          path="/description" 
-          element={
-            <ProtectedRoute user={user}>
-              <SongDescription
-                user={user}
-                form={songForm}
-                setForm={setSongForm}
-                onGenerate={handleGenerateSong}
-                onLogout={handleLogout}
-                onApiUsage={() => navigate('/api-call')}
-                isGenerating={isGenerating}
+          <Route 
+            path="/signup" 
+            element={
+              <SignUpPage 
+                onSubmit={handleRegister} 
+                onGoToSignIn={() => navigate('/signin')}
               />
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/loading" 
-          element={
-            <ProtectedRoute user={user}>
-              <LoadingPage />
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/result" 
-          element={
-            <ProtectedRoute user={user}>
-              <ResultPage 
-                song={song} 
-                user={user} 
-                onBack={handleBackFromResult}
-                onLogout={handleLogout}
-              />
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
-          path="/warning" 
-          element={
-            <ProtectedRoute user={user}>
-              {warningData && (
-                <WarningPage 
-                  onBack={handleBackFromWarning}
-                  warningType={warningData.type}
-                  errorData={warningData.error}
-                  user={user}
-                />
-              )}
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route 
-          path="*" 
-          element={
-            user ? (
-              <SongDescription
-                user={user}
-                form={songForm}
-                setForm={setSongForm}
-                onGenerate={handleGenerateSong}
-                onLogout={handleLogout}
-                onApiUsage={() => navigate('/api-call')}
-                isGenerating={isGenerating}
-              />
-            ) : (
+            } 
+          />
+          
+          <Route 
+            path="/signin" 
+            element={
               <SignInPage 
                 onSubmit={handleSignIn} 
                 onGoToSignUp={() => navigate('/signup')}
               />
-            )
-          } 
+            } 
+          />
+
+          <Route 
+            path="/api-call" 
+            element={<ApiUsagePage onBack={handleBackFromApiUsage} />} 
+          />
+
+          <Route 
+            path="/description" 
+            element={
+              <ProtectedRoute user={user}>
+                <SongDescription
+                  user={user}
+                  form={songForm}
+                  setForm={setSongForm}
+                  onGenerate={handleGenerateSong}
+                  onLogout={handleLogout}
+                  onApiUsage={() => navigate('/api-call')}
+                  isGenerating={isGenerating}
+                />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/loading" 
+            element={
+              <ProtectedRoute user={user}>
+                <LoadingPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/result" 
+            element={
+              <ProtectedRoute user={user}>
+                <ResultPage 
+                  song={song} 
+                  user={user} 
+                  onBack={handleBackFromResult}
+                  onLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/warning" 
+            element={
+              <ProtectedRoute user={user}>
+                {warningData && (
+                  <WarningPage 
+                    onBack={handleBackFromWarning}
+                    warningType={warningData.type}
+                    errorData={warningData.error}
+                    user={user}
+                  />
+                )}
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="*" 
+            element={
+              user ? (
+                <SongDescription
+                  user={user}
+                  form={songForm}
+                  setForm={setSongForm}
+                  onGenerate={handleGenerateSong}
+                  onLogout={handleLogout}
+                  onApiUsage={() => navigate('/api-call')}
+                  isGenerating={isGenerating}
+                />
+              ) : (
+                <SignInPage 
+                  onSubmit={handleSignIn} 
+                  onGoToSignUp={() => navigate('/signup')}
+                />
+              )
+            } 
+          />
+        </Routes>
+        
+        <ToastContainer 
+          autoClose={3000} 
+          position="top-center" 
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          style={{
+            fontSize: '14px',
+            fontWeight: '500'
+          }}
+          toastStyle={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            color: '#1f2937',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px)',
+          }}
         />
-      </Routes>
-      
-      <ToastContainer 
-        autoClose={3000} 
-        position="top-center" 
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        style={{
-          fontSize: '14px',
-          fontWeight: '500'
-        }}
-        toastStyle={{
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          color: '#1f2937',
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          backdropFilter: 'blur(10px)',
-        }}
-      />
-    </div>
+      </div>
+    </>
   );
 }
 
