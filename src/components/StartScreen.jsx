@@ -30,7 +30,7 @@ const StartScreen = ({ onStart }) => (
     </div>
 
     {/* Button START */}
-    <div className="w-full flex justify-center mb-20 -mt-8">
+    <div className="w-full flex justify-center mb-24 -mt-8">
       <button
         onClick={onStart}
         className="w-[90%] py-2 border-2 border-white hover:text-white rounded-md text-white font-bold text-lg tracking-widest transition active:scale-95 hover:text-black"
