@@ -166,10 +166,10 @@ const ApiUsagePage = ({ onBack }) => {
                 <span>Remaining:</span>
                 <span className="font-mono text-green-300">{stats.api_usage.chatgpt.remaining}</span>
               </div>
-              <div className="flex justify-between text-white/90">
+              {/* <div className="flex justify-between text-white/90">
                 <span>Total Cost:</span>
                 <span className="font-mono text-yellow-300">{formatCost(stats.api_usage.chatgpt.total_cost)}</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -219,24 +219,25 @@ const ApiUsagePage = ({ onBack }) => {
                 <span>Remaining:</span>
                 <span className="font-mono text-green-300">{stats.api_usage.mureka.remaining}</span>
               </div>
-              <div className="flex justify-between text-white/90">
+              {/* <div className="flex justify-between text-white/90">
                 <span>Total Cost:</span>
                 <span className="font-mono text-yellow-300">{formatCost(stats.api_usage.mureka.total_cost)}</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
           {/* Moderation Stats */}
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+            <h2 className="text-xl font-bold text-white">Song API</h2>
             <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-white/90">
                     <span>Moderation Usage:</span>
                     <span className="font-mono">{stats.api_usage.moderation.used || 0}</span>
                 </div>
-                <div className="flex justify-between text-white/90">
+                {/* <div className="flex justify-between text-white/90">
                     <span>Total Cost:</span>
                     <span className="font-mono text-yellow-300">{formatCost(stats.api_usage.moderation.total_cost || 0)}</span>
-                </div>
+                </div> */}
             </div>
           </div>
 
