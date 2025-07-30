@@ -97,7 +97,7 @@ const ApiUsagePage = ({ onBack }) => {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">API Usage Monitor</h1>
         <p className="text-white/80 text-sm">
-          Real-time monitoring of ChatGPT and Mureka API usage
+          Real-time monitoring of Lyric ChatGPT and Song API usage
         </p>
         {lastUpdated && (
           <p className="text-white/60 text-xs mt-2">
