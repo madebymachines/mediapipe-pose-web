@@ -16,7 +16,7 @@ const StartScreen = ({ onStart }) => (
     </div>
 
     {/* Logo event tengah */}
-    <div className="flex-1 flex flex-col justify-center items-center">
+    <div className="flex-1 flex flex-col justify-center items-center -mt-16">
       <img
         src={eventLogo}
         alt="Acer Day 2025"
@@ -30,10 +30,10 @@ const StartScreen = ({ onStart }) => (
     </div>
 
     {/* Button START */}
-    <div className="w-full flex justify-center mb-8">
+    <div className="w-full flex justify-center mb-20 -mt-8">
       <button
         onClick={onStart}
-        className="w-[90%] -mt-10 py-2 border-2 border-white hover:text-white rounded-md text-white font-bold text-lg tracking-widest transition active:scale-95 hover:text-black"
+        className="w-[90%] py-2 border-2 border-white hover:text-white rounded-md text-white font-bold text-lg tracking-widest transition active:scale-95 hover:text-black"
         style={{
           background: "transparent",
         }}
