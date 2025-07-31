@@ -49,147 +49,147 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
     };
   }, []);
 
-  useEffect(() => {
-    const getVideoUrl = async () => {
-      if (!song.job_id) return;
+  // useEffect(() => {
+  //   const getVideoUrl = async () => {
+  //     if (!song.job_id) return;
       
-      const now = Date.now();
-      const timeSinceLastRequest = now - lastRequestTimeRef.current;
-      if (timeSinceLastRequest < 2000) {
-        console.log('⚠️ Rate limiting protection: waiting before next request');
-        return;
-      }
+  //     const now = Date.now();
+  //     const timeSinceLastRequest = now - lastRequestTimeRef.current;
+  //     if (timeSinceLastRequest < 2000) {
+  //       console.log('⚠️ Rate limiting protection: waiting before next request');
+  //       return;
+  //     }
       
-      try {
-        lastRequestTimeRef.current = now;
-        console.log('🎬 Fetching video status for job ID:', song.job_id, '(Attempt:', retryCountRef.current + 1, ')');
+  //     try {
+  //       lastRequestTimeRef.current = now;
+  //       console.log('🎬 Fetching video status for job ID:', song.job_id, '(Attempt:', retryCountRef.current + 1, ')');
         
-        const response = await axios.get(`${backendUrl}/video-status/${song.job_id}`, {
-          timeout: 10000,
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
-        });
+  //       const response = await axios.get(`${backendUrl}/video-status/${song.job_id}`, {
+  //         timeout: 10000,
+  //         headers: {
+  //           'Accept': 'application/json',
+  //           'Cache-Control': 'no-cache'
+  //         }
+  //       });
         
-        console.log('📹 Video response:', response.data);
+  //       console.log('📹 Video response:', response.data);
         
-        const status = response.data.video?.status;
-        setVideoStatus(status);
+  //       const status = response.data.video?.status;
+  //       setVideoStatus(status);
         
-        retryCountRef.current = 0;
+  //       retryCountRef.current = 0;
         
-        if (status === 'COMPLETE' && response.data.video?.downloadUrl) {
-          console.log('✅ Video URL found:', response.data.video.downloadUrl);
-          setVideoUrl(response.data.video.downloadUrl);
-          setIsLoadingVideo(false);
+  //       if (status === 'COMPLETE' && response.data.video?.downloadUrl) {
+  //         console.log('✅ Video URL found:', response.data.video.downloadUrl);
+  //         setVideoUrl(response.data.video.downloadUrl);
+  //         setIsLoadingVideo(false);
           
-          // Auto-download video file when URL is ready
-          await downloadVideoFile(response.data.video.downloadUrl);
+  //         // Auto-download video file when URL is ready
+  //         await downloadVideoFile(response.data.video.downloadUrl);
           
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-        } else if (status === 'PROGRESSING' || status === 'PENDING') {
-          console.log('⏳ Video still processing. Status:', status);
-          setIsLoadingVideo(true);
+  //         if (pollingIntervalRef.current) {
+  //           clearInterval(pollingIntervalRef.current);
+  //           pollingIntervalRef.current = null;
+  //         }
+  //       } else if (status === 'PROGRESSING' || status === 'PENDING') {
+  //         console.log('⏳ Video still processing. Status:', status);
+  //         setIsLoadingVideo(true);
           
-          if (!pollingIntervalRef.current) {
-            const baseInterval = 5000;
-            const backoffMultiplier = Math.min(Math.pow(1.5, retryCountRef.current), 8);
-            const interval = baseInterval * backoffMultiplier;
+  //         if (!pollingIntervalRef.current) {
+  //           const baseInterval = 5000;
+  //           const backoffMultiplier = Math.min(Math.pow(1.5, retryCountRef.current), 8);
+  //           const interval = baseInterval * backoffMultiplier;
             
-            console.log(`🔄 Starting polling with ${interval}ms interval`);
+  //           console.log(`🔄 Starting polling with ${interval}ms interval`);
             
-            pollingIntervalRef.current = setInterval(() => {
-              getVideoUrl();
-            }, interval);
-          }
-        } else if (status === 'FAILED') {
-          console.log('❌ Video generation failed');
-          setIsLoadingVideo(false);
+  //           pollingIntervalRef.current = setInterval(() => {
+  //             getVideoUrl();
+  //           }, interval);
+  //         }
+  //       } else if (status === 'FAILED') {
+  //         console.log('❌ Video generation failed');
+  //         setIsLoadingVideo(false);
           
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error getting video URL:', error);
+  //         if (pollingIntervalRef.current) {
+  //           clearInterval(pollingIntervalRef.current);
+  //           pollingIntervalRef.current = null;
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('❌ Error getting video URL:', error);
         
-        retryCountRef.current += 1;
+  //       retryCountRef.current += 1;
         
-        if (error.response?.status === 429 || error.message.includes('Too Many Requests')) {
-          console.log('⚠️ Rate limited, implementing exponential backoff');
+  //       if (error.response?.status === 429 || error.message.includes('Too Many Requests')) {
+  //         console.log('⚠️ Rate limited, implementing exponential backoff');
           
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
+  //         if (pollingIntervalRef.current) {
+  //           clearInterval(pollingIntervalRef.current);
+  //           pollingIntervalRef.current = null;
+  //         }
           
-          const backoffDelay = Math.min(10000 * Math.pow(2, retryCountRef.current - 1), 120000);
-          console.log(`⏰ Will retry in ${backoffDelay / 1000} seconds`);
+  //         const backoffDelay = Math.min(10000 * Math.pow(2, retryCountRef.current - 1), 120000);
+  //         console.log(`⏰ Will retry in ${backoffDelay / 1000} seconds`);
           
-          setTimeout(() => {
-            if (!pollingIntervalRef.current && !videoUrl) {
-              pollingIntervalRef.current = setInterval(() => {
-                getVideoUrl();
-              }, backoffDelay);
-            }
-          }, backoffDelay);
+  //         setTimeout(() => {
+  //           if (!pollingIntervalRef.current && !videoUrl) {
+  //             pollingIntervalRef.current = setInterval(() => {
+  //               getVideoUrl();
+  //             }, backoffDelay);
+  //           }
+  //         }, backoffDelay);
           
-        } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-          console.log('⏰ Request timeout, will retry with longer interval');
+  //       } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+  //         console.log('⏰ Request timeout, will retry with longer interval');
           
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
+  //         if (pollingIntervalRef.current) {
+  //           clearInterval(pollingIntervalRef.current);
+  //           pollingIntervalRef.current = null;
+  //         }
           
-          setTimeout(() => {
-            if (!pollingIntervalRef.current && !videoUrl) {
-              pollingIntervalRef.current = setInterval(() => {
-                getVideoUrl();
-              }, 15000);
-            }
-          }, 5000);
+  //         setTimeout(() => {
+  //           if (!pollingIntervalRef.current && !videoUrl) {
+  //             pollingIntervalRef.current = setInterval(() => {
+  //               getVideoUrl();
+  //             }, 15000);
+  //           }
+  //         }, 5000);
           
-        } else if (retryCountRef.current >= 10) {
-          console.log('❌ Max retry attempts reached, stopping polling');
-          setIsLoadingVideo(false);
-          setVideoStatus('FAILED');
+  //       } else if (retryCountRef.current >= 10) {
+  //         console.log('❌ Max retry attempts reached, stopping polling');
+  //         setIsLoadingVideo(false);
+  //         setVideoStatus('FAILED');
           
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-        } else {
-          const retryDelay = Math.min(3000 * retryCountRef.current, 30000);
-          console.log(`🔄 Will retry in ${retryDelay / 1000} seconds (attempt ${retryCountRef.current})`);
+  //         if (pollingIntervalRef.current) {
+  //           clearInterval(pollingIntervalRef.current);
+  //           pollingIntervalRef.current = null;
+  //         }
+  //       } else {
+  //         const retryDelay = Math.min(3000 * retryCountRef.current, 30000);
+  //         console.log(`🔄 Will retry in ${retryDelay / 1000} seconds (attempt ${retryCountRef.current})`);
           
-          setTimeout(() => {
-            if (!videoUrl) {
-              getVideoUrl();
-            }
-          }, retryDelay);
-        }
-      }
-    };
+  //         setTimeout(() => {
+  //           if (!videoUrl) {
+  //             getVideoUrl();
+  //           }
+  //         }, retryDelay);
+  //       }
+  //     }
+  //   };
 
-    if (!videoUrl && song.job_id) {
-      setTimeout(() => {
-        getVideoUrl();
-      }, 1000);
-    }
+  //   if (!videoUrl && song.job_id) {
+  //     setTimeout(() => {
+  //       getVideoUrl();
+  //     }, 1000);
+  //   }
 
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
-      }
-    };
-  }, [song.job_id, backendUrl, videoUrl]);
+  //   return () => {
+  //     if (pollingIntervalRef.current) {
+  //       clearInterval(pollingIntervalRef.current);
+  //       pollingIntervalRef.current = null;
+  //     }
+  //   };
+  // }, [song.job_id, backendUrl, videoUrl]);
 
   // Function to download video file as blob
   const downloadVideoFile = async (url) => {

@@ -83,7 +83,7 @@ function App() {
     }
     
     // 🔥 PRIORITY 4: If user exists and on home, go to description
-    if (user && currentPath === '/' && hasVisited) {
+    if (user && currentPath === '/') {
       navigate('/description', { replace: true });
       return;
     }
