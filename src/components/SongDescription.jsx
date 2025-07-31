@@ -120,21 +120,6 @@ const SongDescription = ({
           rows={10}
         />
 
-        {/* 🔥 ENHANCED: Show generation status */}
-        {isGenerating && (
-          <div className="w-full mt-4 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              <span className="text-white text-sm font-medium">
-                Processing your request...
-              </span>
-            </div>
-            <p className="text-white/80 text-xs text-center mt-2">
-              Please wait while we generate your song
-            </p>
-          </div>
-        )}
-
         <button
           onClick={handleGenerateClick}
           className={`w-full py-3 rounded-md font-bold text-lg tracking-widest uppercase transition mt-6 border-2 ${
