@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import logo from "../assets/logo.png";
-import runnerImg from "../assets/runner.png";
+import runnerImg from "../assets/Template-Junk-AI-landscape.jpg";
 import { 
   ChevronLeftIcon, 
   PlayIcon, 

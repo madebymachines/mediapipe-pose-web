@@ -16,7 +16,7 @@ const StartScreen = ({ onStart }) => (
     </div>
 
     {/* Logo event tengah */}
-    <div className="flex-1 flex flex-col justify-center items-center -mt-16">
+    <div className="flex-1 flex flex-col justify-center items-center">
       <img
         src={eventLogo}
         alt="Acer Day 2025"
