@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [tailwindcss()],
-  base: './', 
+  base: '/', 
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -19,5 +19,6 @@ export default defineConfig({
   },
   preview: {
     port: 4173,
+    historyApiFallback: true,
   }
 })

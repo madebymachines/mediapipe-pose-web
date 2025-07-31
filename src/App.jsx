@@ -59,6 +59,8 @@ function App() {
     
     const currentPath = location.pathname;
     const hasVisited = sessionStorage.getItem("hasVisited");
+
+    if (isGenerating) return;
     
     // 🔥 PRIORITY 1: If user just logged out, stay on StartScreen
     if (isLoggedOut) {
@@ -70,28 +72,24 @@ function App() {
     }
     
     // 🔥 PRIORITY 2: If first-time visitor and no user, show StartScreen
-    if (currentPath === "/" && !hasVisited && !user) {
-      console.log('👋 First-time visitor, showing StartScreen');
-      return;
+    if (currentPath === "/" && !hasVisited && !user && !isLoggedOut) {
+      return; // Stay on home to show StartScreen
     }
     
     // 🔥 PRIORITY 3: Protect routes that require authentication
-    if (!user && ['/description', '/loading', '/result'].includes(currentPath)) {
-      console.log('🔒 Protected route, redirecting to signin');
+    if (!user && ['/description', '/loading', '/result', '/warning'].includes(currentPath)) {
       navigate('/signin', { replace: true });
       return;
     }
     
     // 🔥 PRIORITY 4: If user exists and on home, go to description
-    if (user && currentPath === '/') {
-      console.log('👤 User exists, redirecting to description');
+    if (user && currentPath === '/' && hasVisited) {
       navigate('/description', { replace: true });
       return;
     }
     
     // 🔥 PRIORITY 5: If user exists but on signin/signup, go to description
     if (user && ['/signin', '/signup'].includes(currentPath)) {
-      console.log('👤 User exists on auth page, redirecting to description');
       navigate('/description', { replace: true });
       return;
     }
