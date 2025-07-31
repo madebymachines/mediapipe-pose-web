@@ -18,13 +18,47 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
   const [isLoadingVideo, setIsLoadingVideo] = useState(false);
   const [videoStatus, setVideoStatus] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false); 
-  const [videoBlob, setVideoBlob] = useState(null); 
+  const [videoBlob, setVideoBlob] = useState(null);
+  const [isDesktop, setIsDesktop] = useState(false); // State untuk deteksi device
   const audioRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   const retryCountRef = useRef(0);
   const lastRequestTimeRef = useRef(0);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  // Fungsi untuk deteksi apakah device adalah desktop
+  const checkIsDesktop = () => {
+    // Method 1: Menggunakan user agent
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    
+    // Method 2: Menggunakan screen size (opsional, sebagai backup)
+    const isLargeScreen = window.innerWidth >= 1024;
+    
+    // Method 3: Menggunakan touch capability
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // Kombinasi: desktop jika bukan mobile, screen besar, dan tidak ada touch
+    return !isMobile && isLargeScreen && !hasTouch;
+  };
+
+  // Effect untuk deteksi device saat component mount dan window resize
+  useEffect(() => {
+    const updateDeviceType = () => {
+      setIsDesktop(checkIsDesktop());
+    };
+
+    // Check on mount
+    updateDeviceType();
+
+    // Check on window resize
+    window.addEventListener('resize', updateDeviceType);
+    
+    return () => {
+      window.removeEventListener('resize', updateDeviceType);
+    };
+  }, []);
 
   const handleLogout = () => {
     onLogout();
@@ -221,6 +255,33 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
     }
   };
 
+  // Fungsi untuk download video ke local storage (khusus desktop)
+  const handleDownloadVideo = async () => {
+    if (!videoBlob) return;
+    
+    try {
+      // Buat URL object dari blob
+      const url = URL.createObjectURL(videoBlob);
+      
+      // Buat element anchor untuk download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${song.title || 'AI-Song'}-video.mp4`;
+      
+      // Append ke document, klik, dan remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup URL object
+      URL.revokeObjectURL(url);
+      
+      console.log('✅ Video download initiated');
+    } catch (error) {
+      console.error('❌ Error downloading video:', error);
+    }
+  };
+
   // Play/Pause toggle
   const togglePlayPause = () => {
     const audio = audioRef.current;
@@ -414,14 +475,40 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
               ? 'text-red-400'
               : 'text-yellow-400'
           }`}>
-            {isVideoReady && '✅ Video ready to share!'}
+            {isVideoReady && '✅ Video ready!'}
             {videoStatus === 'FAILED' && '❌ Video generation failed'}
             {(videoStatus === 'PROGRESSING' || videoStatus === 'PENDING' || isDownloading) && `⏳ ${getLoadingText()}`}
             {videoStatus === 'COMPLETE' && !videoBlob && !isDownloading && '📥 Video URL ready (downloading file...)'}
           </div>
         )}
 
-        {/* Share Button - Now shares MP4 file directly */}
+        {/* Download Button - Hanya untuk Desktop */}
+        {isDesktop && (
+          <button
+            onClick={handleDownloadVideo}
+            disabled={!isVideoReady}
+            className={`w-full border-2 font-bold py-3 rounded-md text-lg tracking-widest uppercase transition flex items-center justify-center gap-2 ${
+              isVideoReady
+                ? 'border-green-400 text-green-400 bg-transparent active:scale-95 hover:bg-green-400/10'
+                : 'border-white/40 text-white/40 bg-transparent cursor-not-allowed opacity-60'
+            }`}
+            style={{ letterSpacing: ".13em" }}
+          >
+            {isVideoReady ? (
+              <>
+                <ArrowDownTrayIcon className="w-5 h-5" />
+                <span>Download Video</span>
+              </>
+            ) : (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white/40"></div>
+                <span>{getLoadingText()}</span>
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Share Button - Untuk semua device */}
         <button
           onClick={handleShare}
           disabled={!isVideoReady}
@@ -436,7 +523,7 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
         >
           {isVideoReady ? (
             <>
-              {/* <ShareIcon className="w-5 h-5" /> */}
+              <ShareIcon className="w-5 h-5" />
               <span>Share</span>
             </>
           ) : videoStatus === 'FAILED' ? (
@@ -456,5 +543,3 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
 };
 
 export default ResultPage;
-
-
