@@ -338,33 +338,29 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
 
   // Share function with file sharing capability
   const handleShare = async () => {
-    const shareTitle = `${song.title} - AI Generated Song`;
-    const shareText = `Check out my AI-generated song: "${song.title}" written by ${user.name}`;
-    
-    // Check if Web Share API is supported and we have a video file
-    if (navigator.share && videoBlob) {
+    if (navigator.canShare && videoBlob) {
       try {
-        // Create a File object from the blob
-        const videoFile = new File([videoBlob], `${song.title}-video.mp4`, { 
-          type: 'video/mp4',
-          lastModified: new Date().getTime() 
-        });
-        
-        // Share the video file directly
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          files: [videoFile]
-        });
-        
-        console.log('✅ Successfully shared video file');
-        return;
-        
+        // Generate random filename seperti contoh
+        const fileName = Math.random().toString(36).substring(2) + ".mp4";
+        const filesArray = [new File([videoBlob], fileName, { type: "video/mp4" })];
+
+        // Cek apakah files bisa di-share
+        if (navigator.canShare({ files: filesArray })) {
+          await navigator.share({
+            files: filesArray,
+            // Hapus title dan text untuk kompatibilitas maksimal
+          });
+          console.log("Video shared successfully");
+        } else {
+          console.error("File sharing not supported");
+        }
       } catch (error) {
         if (error.name !== 'AbortError') {
-          console.error('❌ Error sharing video file:', error);
+          console.error("Error sharing the video:", error);
         }
       }
+    } else {
+      console.error("Web Share API or video not available");
     }
   };
 
