@@ -346,7 +346,8 @@ const ResultPage = ({ song, user, onBack, onLogout }) => {
       try {
         // Create a File object from the blob
         const videoFile = new File([videoBlob], `${song.title}-video.mp4`, { 
-          type: 'video/mp4' 
+          type: 'video/mp4',
+          lastModified: new Date().getTime() 
         });
         
         // Share the video file directly
