@@ -20,36 +20,36 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       gifUrl: '/assets/push up.gif', // Push-up GIF
       targetReps: '20 reps'
     },
-    {
-      id: 'situp',
-      name: 'Sit-Up',
-      description: 'Core strengthening',
-      color: 'from-red-500 to-orange-500',
-      icon: <Target size={32} />,
-      // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya  
-      gifUrl: '/assets/sit up.gif', // Sit-up GIF
-      targetReps: '25 reps'
-    },
-    {
-      id: 'squat',
-      name: 'Squat',
-      description: 'Lower body power',
-      color: 'from-teal-500 to-green-600',
-      icon: <Timer size={32} />,
-      // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
-      gifUrl: '/assets/squat.gif', // Squat GIF
-      targetReps: '30 reps'
-    },
-    {
-      id: 'jumpingjack',
-      name: 'Jumping Jack',
-      description: 'Full body cardio',
-      color: 'from-yellow-500 to-cyan-500',
-      icon: <Play size={32} />,
-      // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
-      gifUrl: '/assets/jumping jack.gif', // Jumping Jack GIF
-      targetReps: '50 reps'
-    }
+    // {
+    //   id: 'situp',
+    //   name: 'Sit-Up',
+    //   description: 'Core strengthening',
+    //   color: 'from-red-500 to-orange-500',
+    //   icon: <Target size={32} />,
+    //   // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya  
+    //   gifUrl: '/assets/sit up.gif', // Sit-up GIF
+    //   targetReps: '25 reps'
+    // },
+    // {
+    //   id: 'squat',
+    //   name: 'Squat',
+    //   description: 'Lower body power',
+    //   color: 'from-teal-500 to-green-600',
+    //   icon: <Timer size={32} />,
+    //   // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
+    //   gifUrl: '/assets/squat.gif', // Squat GIF
+    //   targetReps: '30 reps'
+    // },
+    // {
+    //   id: 'jumpingjack',
+    //   name: 'Jumping Jack',
+    //   description: 'Full body cardio',
+    //   color: 'from-yellow-500 to-cyan-500',
+    //   icon: <Play size={32} />,
+    //   // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
+    //   gifUrl: '/assets/jumping jack.gif', // Jumping Jack GIF
+    //   targetReps: '50 reps'
+    // }
   ];
 
   return (

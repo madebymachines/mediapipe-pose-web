@@ -161,7 +161,7 @@ const PushUpApp = ({ onBack }) => {
         const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-            delegate: "CPU", // Changed from GPU to CPU for better compatibility
+            delegate: "GPU", // Changed from GPU to CPU for better compatibility
           },
           runningMode: "VIDEO",
           numPoses: 1,
