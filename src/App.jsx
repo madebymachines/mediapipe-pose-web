@@ -74,7 +74,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       </div>
 
       {/* Exercise Grid */}
-      <div className="flex-1 p-4 grid grid-cols-2 gap-4 -mt-5">
+      <div className="flex-1 px-4 py-2 grid grid-cols-2 gap-4 -mt-5">
         {exercises.map((exercise) => (
           <div
             key={exercise.id}
