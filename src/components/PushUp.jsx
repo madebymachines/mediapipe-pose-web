@@ -140,7 +140,13 @@ const PushUpApp = ({ onBack }) => {
   const [alert, setAlert] = useState('');
   const [elbowAngle, setElbowAngle] = useState(0);
   const [isInDownPosition, setIsInDownPosition] = useState(false);
-  // Add state to track last spoken count
+  
+  // Add frame rate states
+  const [frameRate, setFrameRate] = useState(0);
+  const [frameRateSupported, setFrameRateSupported] = useState(true);
+  const [frameRateChecked, setFrameRateChecked] = useState(false);
+  const [frameRateWarning, setFrameRateWarning] = useState('');
+  
   const [lastSpokenCount, setLastSpokenCount] = useState(-1);
   const speakTimeoutRef = useRef(null);
 
@@ -149,6 +155,11 @@ const PushUpApp = ({ onBack }) => {
   const pushUpCounterRef = useRef(new PushUpCounter());
   const animationFrameRef = useRef(null);
   const poseLandmarkerRef = useRef(null);
+
+  // Frame rate tracking refs
+  const frameCounterRef = useRef(0);
+  const frameTimeStartRef = useRef(null);
+  const frameRateCheckTimeoutRef = useRef(null);
 
   // Initialize MediaPipe PoseLandmarker
   useEffect(() => {
@@ -195,6 +206,64 @@ const PushUpApp = ({ onBack }) => {
     loadVoices();
   }, []);
 
+  // Frame rate checking function
+  const checkFrameRate = useCallback(() => {
+    if (!videoRef.current || !webcamRunning || frameRateChecked) {
+      return;
+    }
+
+    const video = videoRef.current;
+    
+    // Reset frame counter and start timing
+    frameCounterRef.current = 0;
+    frameTimeStartRef.current = performance.now();
+    
+    const measureFrameRate = () => {
+      if (!video.videoWidth || !video.videoHeight || video.readyState !== 4) {
+        // Video not ready yet, try again
+        frameRateCheckTimeoutRef.current = setTimeout(measureFrameRate, 100);
+        return;
+      }
+      
+      frameCounterRef.current++;
+      const currentTime = performance.now();
+      const elapsedTime = currentTime - frameTimeStartRef.current;
+      
+      // Check frame rate after collecting data for 2 seconds
+      if (elapsedTime >= 2000) {
+        const calculatedFPS = (frameCounterRef.current / elapsedTime) * 1000;
+        setFrameRate(Math.round(calculatedFPS));
+        setFrameRateChecked(true);
+        
+        // Check if frame rate is sufficient (minimum 15 FPS for decent pose detection)
+        const minimumFPS = 15;
+        if (calculatedFPS < minimumFPS) {
+          setFrameRateSupported(false);
+          setFrameRateWarning(
+            `⚠️ Frame rate terlalu rendah: ${Math.round(calculatedFPS)} FPS. ` +
+            `Minimal ${minimumFPS} FPS diperlukan untuk deteksi pose yang optimal. ` +
+            `Video Anda mungkin tidak support untuk aplikasi ini.`
+          );
+          
+          // Speak the warning
+          speak(`Warning: Frame rate too low. Video may not be supported for optimal pose detection.`, true);
+        } else {
+          setFrameRateSupported(true);
+          setFrameRateWarning('');
+          console.log(`✅ Frame rate OK: ${Math.round(calculatedFPS)} FPS`);
+        }
+        
+        return;
+      }
+      
+      // Continue measuring
+      frameRateCheckTimeoutRef.current = requestAnimationFrame(measureFrameRate);
+    };
+    
+    // Start measuring frame rate
+    frameRateCheckTimeoutRef.current = requestAnimationFrame(measureFrameRate);
+  }, [webcamRunning, frameRateChecked]);
+
   // Enhanced speak function with debouncing
   const speak = useCallback((text, force = false) => {
     return new Promise((resolve) => {
@@ -239,6 +308,11 @@ const PushUpApp = ({ onBack }) => {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           setWebcamRunning(true);
+          // Reset frame rate check states when new webcam starts
+          setFrameRateChecked(false);
+          setFrameRateSupported(true);
+          setFrameRateWarning('');
+          setFrameRate(0);
         };
       }
     } catch (error) {
@@ -253,8 +327,35 @@ const PushUpApp = ({ onBack }) => {
       tracks.forEach(track => track.stop());
       videoRef.current.srcObject = null;
       setWebcamRunning(false);
+      
+      // Clear frame rate checking timeout
+      if (frameRateCheckTimeoutRef.current) {
+        if (typeof frameRateCheckTimeoutRef.current === 'number') {
+          clearTimeout(frameRateCheckTimeoutRef.current);
+        } else {
+          cancelAnimationFrame(frameRateCheckTimeoutRef.current);
+        }
+      }
+      
+      // Reset frame rate states
+      setFrameRateChecked(false);
+      setFrameRateSupported(true);
+      setFrameRateWarning('');
+      setFrameRate(0);
     }
   }, []);
+
+  // Start frame rate check when webcam starts
+  useEffect(() => {
+    if (webcamRunning && !frameRateChecked) {
+      // Start checking frame rate after a short delay to let video stabilize
+      const timeout = setTimeout(() => {
+        checkFrameRate();
+      }, 1000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [webcamRunning, frameRateChecked, checkFrameRate]);
 
   const detectPose = useCallback(async () => {
     if (!videoRef.current || !webcamRunning || !isActive || !poseLandmarkerRef.current) {
@@ -379,80 +480,85 @@ const PushUpApp = ({ onBack }) => {
           });
         }
         
-        // Process pose for push-up counting
-        const { count, alert: poseAlert, angle, isDown, stability: angleStability, frames, newCount } = pushUpCounterRef.current.processPose(landmarks);
-        
-        // Debug: Log key values
-        console.log('Pose Data:', {
-          angle,
-          isDown,
-          count,
-          frames,
-          newCount,
-          leftElbow: landmarks[13] ? `(${landmarks[13].x.toFixed(2)}, ${landmarks[13].y.toFixed(2)})` : 'missing',
-          rightElbow: landmarks[14] ? `(${landmarks[14].x.toFixed(2)}, ${landmarks[14].y.toFixed(2)})` : 'missing'
-        });
-        
-        // Handle count speech with proper debouncing
-        if (newCount && count !== lastSpokenCount && count > 0) {
-          setLastSpokenCount(count);
-          setPushUpCount(count);
+        // Process pose for push-up counting (only if frame rate is supported)
+        if (frameRateSupported) {
+          const { count, alert: poseAlert, angle, isDown, stability: angleStability, frames, newCount } = pushUpCounterRef.current.processPose(landmarks);
           
-          // Speak count with debouncing
-          speak(count.toString(), true).catch(() => {});
+          // Debug: Log key values
+          console.log('Pose Data:', {
+            angle,
+            isDown,
+            count,
+            frames,
+            newCount,
+            leftElbow: landmarks[13] ? `(${landmarks[13].x.toFixed(2)}, ${landmarks[13].y.toFixed(2)})` : 'missing',
+            rightElbow: landmarks[14] ? `(${landmarks[14].x.toFixed(2)}, ${landmarks[14].y.toFixed(2)})` : 'missing'
+          });
           
-          // Check if target achieved
-          if (count >= targetCount) {
-            setIsCompleted(true);
-            setIsActive(false);
-            // Speak completion message after a delay
-            setTimeout(() => {
-              speak(`Congratulations! You completed ${targetCount} push-ups!`, true).catch(() => {});
-            }, 1000);
-            return;
+          // Handle count speech with proper debouncing
+          if (newCount && count !== lastSpokenCount && count > 0) {
+            setLastSpokenCount(count);
+            setPushUpCount(count);
+            
+            // Speak count with debouncing
+            speak(count.toString(), true).catch(() => {});
+            
+            // Check if target achieved
+            if (count >= targetCount) {
+              setIsCompleted(true);
+              setIsActive(false);
+              // Speak completion message after a delay
+              setTimeout(() => {
+                speak(`Congratulations! You completed ${targetCount} push-ups!`, true).catch(() => {});
+              }, 1000);
+              return;
+            }
+          } else if (count !== pushUpCount) {
+            // Update count state without speaking if not a new count
+            setPushUpCount(count);
           }
-        } else if (count !== pushUpCount) {
-          // Update count state without speaking if not a new count
-          setPushUpCount(count);
-        }
 
-        // Draw angle visualization
-        if (landmarks[11] && landmarks[13] && landmarks[15]) {
-          const shoulder = landmarks[11];
-          const elbow = landmarks[13];
-          const wrist = landmarks[15];
-          
-          const shoulderX = shoulder.x * canvas.width;
-          const shoulderY = shoulder.y * canvas.height;
-          const elbowX = elbow.x * canvas.width;
-          const elbowY = elbow.y * canvas.height;
-          const wristX = wrist.x * canvas.width;
-          const wristY = wrist.y * canvas.height;
-          
-          // Draw angle lines
-          canvasCtx.strokeStyle = '#FFFF00';
-          canvasCtx.lineWidth = 4;
-          canvasCtx.beginPath();
-          canvasCtx.moveTo(shoulderX, shoulderY);
-          canvasCtx.lineTo(elbowX, elbowY);
-          canvasCtx.lineTo(wristX, wristY);
-          canvasCtx.stroke();
-          
-          // Draw angle text
-          canvasCtx.fillStyle = '#FFFF00';
-          canvasCtx.font = 'bold 20px Arial';
-          canvasCtx.fillText(`${angle}°`, elbowX + 20, elbowY - 20);
-        }
+          // Draw angle visualization
+          if (landmarks[11] && landmarks[13] && landmarks[15]) {
+            const shoulder = landmarks[11];
+            const elbow = landmarks[13];
+            const wrist = landmarks[15];
+            
+            const shoulderX = shoulder.x * canvas.width;
+            const shoulderY = shoulder.y * canvas.height;
+            const elbowX = elbow.x * canvas.width;
+            const elbowY = elbow.y * canvas.height;
+            const wristX = wrist.x * canvas.width;
+            const wristY = wrist.y * canvas.height;
+            
+            // Draw angle lines
+            canvasCtx.strokeStyle = '#FFFF00';
+            canvasCtx.lineWidth = 4;
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(shoulderX, shoulderY);
+            canvasCtx.lineTo(elbowX, elbowY);
+            canvasCtx.lineTo(wristX, wristY);
+            canvasCtx.stroke();
+            
+            // Draw angle text
+            canvasCtx.fillStyle = '#FFFF00';
+            canvasCtx.font = 'bold 20px Arial';
+            canvasCtx.fillText(`${angle}°`, elbowX + 20, elbowY - 20);
+          }
 
-        // Update UI states (don't trigger speech here)
-        if (poseAlert) setAlert(poseAlert);
-        if (angle) setElbowAngle(angle);
-        if (angleStability) setStability(angleStability);
-        setIsInDownPosition(isDown);
+          // Update UI states (don't trigger speech here)
+          if (poseAlert) setAlert(poseAlert);
+          if (angle) setElbowAngle(angle);
+          setIsInDownPosition(isDown);
+        }
 
       } else {
         // No pose detected
-        setAlert("Position yourself in front of the camera");
+        if (frameRateSupported) {
+          setAlert("Position yourself in front of the camera");
+        } else {
+          setAlert("Frame rate too low for pose detection");
+        }
       }
 
       // Continue detection
@@ -463,7 +569,7 @@ const PushUpApp = ({ onBack }) => {
       // Continue even on error
       animationFrameRef.current = requestAnimationFrame(detectPose);
     }
-  }, [webcamRunning, isActive, pushUpCount, targetCount, speak]);
+  }, [webcamRunning, isActive, pushUpCount, targetCount, speak, frameRateSupported]);
 
   useEffect(() => {
     if (isActive && webcamRunning) {
@@ -492,7 +598,7 @@ const PushUpApp = ({ onBack }) => {
         }
       }, 1000);
     } else if (isCountingDown && countdown === 0) {
-      setTimeout(() => {
+      timeout = setTimeout(() => {
         setIsCountingDown(false);
         setIsActive(true);
         setCountdown(5);
@@ -507,6 +613,16 @@ const PushUpApp = ({ onBack }) => {
   const startWorkout = async () => {
     if (!webcamRunning) {
       await startWebcam();
+    }
+    
+    // Check if frame rate is supported before starting
+    if (!frameRateSupported && frameRateChecked) {
+      const proceed = window.confirm(
+        'Frame rate terlalu rendah untuk deteksi optimal. Apakah Anda ingin melanjutkan?'
+      );
+      if (!proceed) {
+        return;
+      }
     }
     
     setIsCompleted(false);
@@ -532,7 +648,6 @@ const PushUpApp = ({ onBack }) => {
     setAlert('');
     setElbowAngle(0);
     setIsInDownPosition(false);
-    setStability('');
     pushUpCounterRef.current.resetCount();
     speak('Workout reset').catch(() => {});
   };
@@ -565,6 +680,20 @@ const PushUpApp = ({ onBack }) => {
         </div>
       </div>
 
+      {/* Frame Rate Warning */}
+      {frameRateWarning && (
+        <div className="w-full max-w-sm mx-4 mb-4">
+          <div className="bg-red-500 bg-opacity-20 border border-red-400 text-white p-3 rounded-lg backdrop-blur-sm">
+            <div className="text-sm">{frameRateWarning}</div>
+            {frameRate > 0 && (
+              <div className="text-xs mt-1 opacity-80">
+                Frame Rate: {frameRate} FPS
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Camera View */}
       <div className="relative w-full max-w-sm mx-4 mb-6">
         <div className="relative aspect-video bg-black overflow-hidden" style={{ aspectRatio: '430/350' }}>
@@ -579,6 +708,13 @@ const PushUpApp = ({ onBack }) => {
             ref={canvasRef}
             className="absolute top-0 left-0 w-full h-full"
           />
+          
+          {/* Frame Rate Display */}
+          {webcamRunning && frameRate > 0 && (
+            <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+              {frameRate} FPS {frameRateSupported ? '✅' : '❌'}
+            </div>
+          )}
           
           {/* Countdown Overlay */}
           {isCountingDown && (
@@ -642,6 +778,7 @@ const PushUpApp = ({ onBack }) => {
           Reset
         </button>
       </div>
+      
       {/* Status Indicator */}
       <div className="absolute top-4 right-4">
         <div className={`w-3 h-3 rounded-full ${webcamRunning ? 'bg-green-400' : 'bg-red-400'}`} />
