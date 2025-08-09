@@ -605,8 +605,8 @@ const PushUpApp = ({ onBack }) => {
       {/* Counter Display */}
       <div className="bg-opacity-20 rounded-2xl p-6 mx-4 -mt-5 backdrop-blur-sm">
         <div className="text-center">
-          <div className="text-6xl text-white opacity-80">
-            {pushUpCount} / {targetCount}   <span className="text-2xl"> push-ups</span>
+          <div className="text-4xl text-white opacity-80">
+            {pushUpCount} / {targetCount}  <span className="text-2xl"> push-ups</span>
           </div>
         </div>
       </div>
