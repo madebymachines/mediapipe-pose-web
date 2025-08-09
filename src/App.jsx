@@ -93,13 +93,6 @@ const ExerciseMenu = ({ onSelectExercise }) => {
                   e.target.nextSibling.style.display = 'flex';
                 }}
               />
-              {/* Fallback icon jika GIF tidak load */}
-              <div 
-                className="w-full h-full bg-gradient-to-br bg-opacity-50 rounded-xl items-center justify-center text-white hidden"
-                style={{ background: `linear-gradient(135deg, ${exercise.color.split(' ')[1]}, ${exercise.color.split(' ')[3]})` }}
-              >
-                {exercise.icon}
-              </div>
             </div>
 
             {/* Exercise Info */}
