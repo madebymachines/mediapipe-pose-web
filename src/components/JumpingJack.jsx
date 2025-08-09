@@ -555,7 +555,7 @@ const PushUpApp = ({ onBack }) => {
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-3xl font-bold text-white flex-1 text-center mr-10">
+          <h1 className="text-3xl font-bold text-white flex-1 text-center mr-10 ml-5">
             Push-Up Counter
           </h1>
         </div>
@@ -567,7 +567,7 @@ const PushUpApp = ({ onBack }) => {
 
       {/* Camera View */}
       <div className="relative w-full max-w-sm mx-4 mb-6">
-        <div className="relative aspect-video bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '430/350' }}>
+        <div className="relative aspect-video bg-black overflow-hidden" style={{ aspectRatio: '430/350' }}>
           <video
             ref={videoRef}
             className="w-full h-full object-cover"

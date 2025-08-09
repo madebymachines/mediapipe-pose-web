@@ -17,7 +17,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       color: 'from-purple-500 to-blue-600',
       icon: <Activity size={32} />,
       // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
-      gifUrl: '/src/assets/push up.gif', // Push-up GIF
+      gifUrl: '/assets/push up.gif', // Push-up GIF
       targetReps: '20 reps'
     },
     {
@@ -27,7 +27,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       color: 'from-red-500 to-orange-500',
       icon: <Target size={32} />,
       // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya  
-      gifUrl: '/src/assets/sit up.gif', // Sit-up GIF
+      gifUrl: '/assets/sit up.gif', // Sit-up GIF
       targetReps: '25 reps'
     },
     {
@@ -37,7 +37,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       color: 'from-teal-500 to-green-600',
       icon: <Timer size={32} />,
       // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
-      gifUrl: '/src/assets/squat.gif', // Squat GIF
+      gifUrl: '/assets/squat.gif', // Squat GIF
       targetReps: '30 reps'
     },
     {
@@ -47,7 +47,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       color: 'from-yellow-500 to-cyan-500',
       icon: <Play size={32} />,
       // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
-      gifUrl: '/src/assets/jumping jack.gif', // Jumping Jack GIF
+      gifUrl: '/assets/jumping jack.gif', // Jumping Jack GIF
       targetReps: '50 reps'
     }
   ];
