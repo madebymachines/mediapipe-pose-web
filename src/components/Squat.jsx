@@ -1,10 +1,72 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Target, ArrowLeft } from 'lucide-react';
+import { Play, Pause, RotateCcw, Target, ArrowLeft, AlertTriangle } from 'lucide-react';
 import {
   PoseLandmarker,
   FilesetResolver,
   DrawingUtils,
 } from "@mediapipe/tasks-vision";
+
+// FPS Monitor Class (sama seperti di Push-up App)
+class FPSMonitor {
+  constructor() {
+    this.frameCount = 0;
+    this.startTime = performance.now();
+    this.lastTime = this.startTime;
+    this.fps = 0;
+    this.avgFps = 0;
+    this.fpsHistory = [];
+    this.maxHistorySize = 30; // 1 second of history at 30fps
+    this.minAcceptableFps = 15; // Minimum FPS for good performance
+    this.warningFps = 20; // FPS below this shows warning
+  }
+
+  update() {
+    this.frameCount++;
+    const currentTime = performance.now();
+    const deltaTime = currentTime - this.lastTime;
+    
+    // Calculate instantaneous FPS
+    this.fps = 1000 / deltaTime;
+    
+    // Add to history
+    this.fpsHistory.push(this.fps);
+    if (this.fpsHistory.length > this.maxHistorySize) {
+      this.fpsHistory.shift();
+    }
+    
+    // Calculate average FPS
+    this.avgFps = this.fpsHistory.reduce((sum, fps) => sum + fps, 0) / this.fpsHistory.length;
+    
+    this.lastTime = currentTime;
+    
+    return {
+      fps: Math.round(this.fps),
+      avgFps: Math.round(this.avgFps),
+      isLowPerformance: this.avgFps < this.minAcceptableFps,
+      showWarning: this.avgFps < this.warningFps,
+      frameCount: this.frameCount
+    };
+  }
+
+  reset() {
+    this.frameCount = 0;
+    this.startTime = performance.now();
+    this.lastTime = this.startTime;
+    this.fps = 0;
+    this.avgFps = 0;
+    this.fpsHistory = [];
+  }
+
+  getPerformanceStatus() {
+    if (this.avgFps >= this.warningFps) {
+      return { status: 'good', message: 'Performance: Good', color: 'text-green-400' };
+    } else if (this.avgFps >= this.minAcceptableFps) {
+      return { status: 'warning', message: 'Performance: Fair', color: 'text-yellow-400' };
+    } else {
+      return { status: 'poor', message: 'Performance: Poor', color: 'text-red-400' };
+    }
+  }
+}
 
 // Improved Squat detection class
 class SquatCounter {
@@ -173,13 +235,27 @@ const SquatApp = ({ onBack }) => {
   const [stability, setStability] = useState('');
   const [lastSpokenCount, setLastSpokenCount] = useState(-1);
   const [debugInfo, setDebugInfo] = useState('');
-  const speakTimeoutRef = useRef(null);
+  
+  // FPS monitoring states - DITAMBAHKAN
+  const [fpsData, setFpsData] = useState({
+    fps: 0,
+    avgFps: 0,
+    isLowPerformance: false,
+    showWarning: false,
+    frameCount: 0
+  });
+  const [showPerformanceAlert, setShowPerformanceAlert] = useState(false);
 
+  const speakTimeoutRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const squatCounterRef = useRef(new SquatCounter());
   const animationFrameRef = useRef(null);
   const poseLandmarkerRef = useRef(null);
+  
+  // FPS monitoring refs - DITAMBAHKAN
+  const fpsMonitorRef = useRef(new FPSMonitor());
+  const performanceAlertShownRef = useRef(false);
 
   // Initialize MediaPipe PoseLandmarker
   useEffect(() => {
@@ -265,6 +341,10 @@ const SquatApp = ({ onBack }) => {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           setWebcamRunning(true);
+          // Reset FPS monitor when webcam starts - DITAMBAHKAN
+          fpsMonitorRef.current.reset();
+          performanceAlertShownRef.current = false;
+          setShowPerformanceAlert(false);
         };
       }
     } catch (error) {
@@ -279,6 +359,15 @@ const SquatApp = ({ onBack }) => {
       tracks.forEach(track => track.stop());
       videoRef.current.srcObject = null;
       setWebcamRunning(false);
+      // Reset FPS data when webcam stops - DITAMBAHKAN
+      setFpsData({
+        fps: 0,
+        avgFps: 0,
+        isLowPerformance: false,
+        showWarning: false,
+        frameCount: 0
+      });
+      fpsMonitorRef.current.reset();
     }
   }, []);
 
@@ -294,6 +383,17 @@ const SquatApp = ({ onBack }) => {
     if (video.videoWidth === 0 || video.videoHeight === 0 || video.readyState !== 4) {
       animationFrameRef.current = requestAnimationFrame(detectPose);
       return;
+    }
+
+    // Update FPS monitoring - DITAMBAHKAN
+    const currentFpsData = fpsMonitorRef.current.update();
+    setFpsData(currentFpsData);
+
+    // Show performance alert if FPS is consistently low - DITAMBAHKAN
+    if (currentFpsData.isLowPerformance && currentFpsData.frameCount > 60 && !performanceAlertShownRef.current) {
+      setShowPerformanceAlert(true);
+      performanceAlertShownRef.current = true;
+      speak("Warning: Low frame rate detected. Video may not be optimal for squat counting performance.", true).catch(() => {});
     }
 
     canvas.width = video.videoWidth;
@@ -493,6 +593,10 @@ const SquatApp = ({ onBack }) => {
     setSquatCount(0);
     squatCounterRef.current.resetCount();
     setCountdown(5);
+    // Reset FPS monitoring - DITAMBAHKAN
+    setShowPerformanceAlert(false);
+    performanceAlertShownRef.current = false;
+    fpsMonitorRef.current.reset();
     
     await speak('Get ready for squats! Starting in 5 seconds');
     setIsCountingDown(true);
@@ -513,9 +617,16 @@ const SquatApp = ({ onBack }) => {
     setKneeAngle(0);
     setIsInDownPosition(false);
     setStability('');
+    // Reset FPS monitoring - DITAMBAHKAN
+    setShowPerformanceAlert(false);
+    performanceAlertShownRef.current = false;
     squatCounterRef.current.resetCount();
+    fpsMonitorRef.current.reset();
     speak('Workout reset').catch(() => {});
   };
+
+  // Get performance status - DITAMBAHKAN
+  const performanceStatus = fpsMonitorRef.current.getPerformanceStatus();
 
   return (
     <div 
@@ -545,6 +656,25 @@ const SquatApp = ({ onBack }) => {
         </div>
       </div>
 
+      {/* Performance Alert - DITAMBAHKAN */}
+      {showPerformanceAlert && (
+        <div className="w-full max-w-sm mx-4 mb-4">
+          <div className="bg-red-500 bg-opacity-90 text-white p-3 rounded-lg flex items-center gap-2">
+            <AlertTriangle size={20} />
+            <div className="text-sm">
+              <div className="font-bold">Low Performance Detected</div>
+              <div>Video may affect squat counting. FPS: {fpsData.avgFps}</div>
+            </div>
+            <button 
+              onClick={() => setShowPerformanceAlert(false)}
+              className="ml-auto text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Camera View */}
       <div className="relative w-full max-w-sm mx-4 mb-6">
         <div className="relative aspect-video bg-black overflow-hidden" style={{ aspectRatio: '430/350' }}>
@@ -559,6 +689,15 @@ const SquatApp = ({ onBack }) => {
             ref={canvasRef}
             className="absolute top-0 left-0 w-full h-full"
           />
+          
+          {/* FPS Display - DITAMBAHKAN */}
+          {webcamRunning && isActive && (
+            <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+              <div>FPS: {fpsData.fps}</div>
+              <div>Avg: {fpsData.avgFps}</div>
+              <div className={performanceStatus.color}>{performanceStatus.message}</div>
+            </div>
+          )}
           
           {/* Countdown Overlay */}
           {isCountingDown && (
@@ -628,9 +767,18 @@ const SquatApp = ({ onBack }) => {
         </button>
       </div>
 
-      {/* Status Indicator */}
-      <div className="absolute top-4 right-4">
+      {/* Status Indicators - DIPERBAIKI */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2">
+        {/* Webcam Status */}
         <div className={`w-3 h-3 rounded-full ${webcamRunning ? 'bg-green-400' : 'bg-red-400'}`} />
+        
+        {/* Performance Status */}
+        {webcamRunning && isActive && (
+          <div className={`w-3 h-3 rounded-full ${
+            fpsData.isLowPerformance ? 'bg-red-400' : 
+            fpsData.showWarning ? 'bg-yellow-400' : 'bg-green-400'
+          }`} />
+        )}
       </div>
     </div>
   );
