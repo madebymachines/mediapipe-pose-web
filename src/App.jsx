@@ -30,16 +30,16 @@ const ExerciseMenu = ({ onSelectExercise }) => {
     //   gifUrl: '/assets/sit up.gif', // Sit-up GIF
     //   targetReps: '25 reps'
     // },
-    // {
-    //   id: 'squat',
-    //   name: 'Squat',
-    //   description: 'Lower body power',
-    //   color: 'from-teal-500 to-green-600',
-    //   icon: <Timer size={32} />,
-    //   // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
-    //   gifUrl: '/assets/squat.gif', // Squat GIF
-    //   targetReps: '30 reps'
-    // },
+    {
+      id: 'squat',
+      name: 'Squat',
+      description: 'Lower body power',
+      color: 'from-teal-500 to-green-600',
+      icon: <Timer size={32} />,
+      // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
+      gifUrl: '/assets/squat.gif', // Squat GIF
+      targetReps: '30 reps'
+    },
     // {
     //   id: 'jumpingjack',
     //   name: 'Jumping Jack',

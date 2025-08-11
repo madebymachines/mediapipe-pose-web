@@ -6,22 +6,23 @@ import {
   DrawingUtils,
 } from "@mediapipe/tasks-vision";
 
-// Simplified Push-up detection for debugging
-class PushUpCounter {
+// Improved Squat detection class
+class SquatCounter {
   constructor() {
     this.count = 0;
     this.isDown = false;
     this.stateFrames = 0;
-    this.minFrames = 3; // Very responsive for testing
+    this.minFrames = 3; // Reduced for more responsive detection
     
-    // Simple thresholds for testing
-    this.downAngleThreshold = 100;  // Less than 100 degrees for down
-    this.upAngleThreshold = 130;    // More than 130 degrees for up
+    // More lenient thresholds for squat detection
+    this.downKneeAngleThreshold = 120; // More lenient for squat down
+    this.upKneeAngleThreshold = 150;   // More lenient for standing up
     
-    // Speech control
-    this.lastSpokenCount = -1;
-    this.lastSpeechTime = 0;
-    this.speechCooldown = 2000; // 2 seconds between speeches
+    // Remove hip drop validation as it's causing issues
+    this.hipDropThreshold = -0.5; // Very lenient or disabled
+    
+    // Debug mode
+    this.debugMode = true;
   }
 
   calculateAngle(a, b, c) {
@@ -33,88 +34,114 @@ class PushUpCounter {
     return angle;
   }
 
-  // Calculate distance between two points
-  calculateDistance(point1, point2) {
-    return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
-  }
-
-  // Simplified process for debugging
   processPose(landmarks) {
     if (!landmarks || landmarks.length < 33) {
       return { count: this.count, alert: "No landmarks detected" };
     }
 
-    const leftShoulder = landmarks[11];
-    const leftElbow = landmarks[13];
-    const leftWrist = landmarks[15];
-    const rightShoulder = landmarks[12];
-    const rightElbow = landmarks[14];
-    const rightWrist = landmarks[16];
+    // Key landmarks for squat detection
+    const leftHip = landmarks[23];
+    const leftKnee = landmarks[25];
+    const leftAnkle = landmarks[27];
+    const rightHip = landmarks[24];
+    const rightKnee = landmarks[26];
+    const rightAnkle = landmarks[28];
 
     // Check if key landmarks are detected
-    if (!leftShoulder || !leftElbow || !leftWrist || !rightShoulder || !rightElbow || !rightWrist) {
-      return { count: this.count, alert: "Key landmarks missing" };
+    if (!leftHip || !leftKnee || !leftAnkle || !rightHip || !rightKnee || !rightAnkle) {
+      return { count: this.count, alert: "Key landmarks missing - please ensure full body is visible" };
     }
 
-    // Calculate elbow angles (simplified)
-    const leftElbowAngle = this.calculateAngle(leftShoulder, leftElbow, leftWrist);
-    const rightElbowAngle = this.calculateAngle(rightShoulder, rightElbow, rightWrist);
-    const avgElbowAngle = (leftElbowAngle + rightElbowAngle) / 2;
+    // Check visibility
+    const minVisibility = 0.3; // More lenient visibility
+    if (leftHip.visibility < minVisibility || leftKnee.visibility < minVisibility || 
+        leftAnkle.visibility < minVisibility || rightHip.visibility < minVisibility || 
+        rightKnee.visibility < minVisibility || rightAnkle.visibility < minVisibility) {
+      return { count: this.count, alert: "Low landmark visibility - adjust camera position" };
+    }
 
-    let alert = `Angle: ${Math.round(avgElbowAngle)}° - `;
+    // Calculate knee angles
+    const leftKneeAngle = this.calculateAngle(leftHip, leftKnee, leftAnkle);
+    const rightKneeAngle = this.calculateAngle(rightHip, rightKnee, rightAnkle);
+    const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
+
+    // Simplified hip position check (optional)
+    const avgHipY = (leftHip.y + rightHip.y) / 2;
+    const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
+    const hipDropRatio = avgHipY - avgKneeY;
+
+    let alert = `Knee: ${Math.round(avgKneeAngle)}° | Hip: ${hipDropRatio.toFixed(2)} - `;
     
-    // Very simple state machine for testing
-    if (!this.isDown && avgElbowAngle <= this.downAngleThreshold) {
-      // Going down
+    if (this.debugMode) {
+      console.log('Squat Debug:', {
+        leftKneeAngle: leftKneeAngle.toFixed(1),
+        rightKneeAngle: rightKneeAngle.toFixed(1),
+        avgKneeAngle: avgKneeAngle.toFixed(1),
+        hipDropRatio: hipDropRatio.toFixed(3),
+        isDown: this.isDown,
+        stateFrames: this.stateFrames,
+        downThreshold: this.downKneeAngleThreshold,
+        upThreshold: this.upKneeAngleThreshold
+      });
+    }
+
+    // Simplified state machine - focus only on knee angle
+    if (!this.isDown && avgKneeAngle <= this.downKneeAngleThreshold) {
+      // Going down into squat - removed hip validation for now
       this.stateFrames++;
-      alert += `Going DOWN (${this.stateFrames}/${this.minFrames})`;
+      alert += `Squatting DOWN (${this.stateFrames}/${this.minFrames})`;
       
       if (this.stateFrames >= this.minFrames) {
         this.isDown = true;
         this.stateFrames = 0;
-        alert = "✅ DOWN position confirmed!";
+        alert = "✅ SQUAT position confirmed!";
       }
-    } else if (this.isDown && avgElbowAngle >= this.upAngleThreshold) {
-      // Going up
+    } else if (this.isDown && avgKneeAngle >= this.upKneeAngleThreshold) {
+      // Standing up from squat
       this.stateFrames++;
-      alert += `Going UP (${this.stateFrames}/${this.minFrames})`;
+      alert += `Standing UP (${this.stateFrames}/${this.minFrames})`;
       
       if (this.stateFrames >= this.minFrames) {
         this.isDown = false;
         const previousCount = this.count;
         this.count++;
         this.stateFrames = 0;
-        alert = "🎉 PUSH-UP COMPLETED!";
+        alert = "🎉 SQUAT COMPLETED!";
         
-        // Return flag to indicate new count for speech
         return { 
           count: this.count, 
           alert: alert,
-          angle: Math.round(avgElbowAngle),
+          angle: Math.round(avgKneeAngle),
           isDown: this.isDown,
-          stability: "Testing",
+          stability: "Good",
           frames: this.stateFrames,
-          newCount: previousCount !== this.count // Flag for new count
+          hipPosition: hipDropRatio.toFixed(3),
+          newCount: previousCount !== this.count,
+          leftAngle: Math.round(leftKneeAngle),
+          rightAngle: Math.round(rightKneeAngle)
         };
       }
     } else {
       // Reset or maintain
       this.stateFrames = 0;
       if (this.isDown) {
-        alert += "In DOWN - push up to complete";
+        alert += "In SQUAT - stand up to complete";
       } else {
-        alert += "Ready - go down to start";
+        alert += "Ready - squat down to start";
       }
     }
 
     return { 
       count: this.count, 
       alert: alert,
-      angle: Math.round(avgElbowAngle),
+      angle: Math.round(avgKneeAngle),
       isDown: this.isDown,
-      stability: "Testing",
+      stability: "Tracking",
       frames: this.stateFrames,
-      newCount: false // Default no new count
+      hipPosition: hipDropRatio.toFixed(3),
+      newCount: false,
+      leftAngle: Math.round(leftKneeAngle),
+      rightAngle: Math.round(rightKneeAngle)
     };
   }
 
@@ -122,31 +149,35 @@ class PushUpCounter {
     this.count = 0;
     this.isDown = false;
     this.stateFrames = 0;
-    this.pushUpStarted = false;
-    this.lastValidAngle = null;
-    this.angleHistory = [];
+  }
+
+  // Method to adjust thresholds dynamically
+  adjustThresholds(downThreshold, upThreshold) {
+    this.downKneeAngleThreshold = downThreshold;
+    this.upKneeAngleThreshold = upThreshold;
   }
 }
 
-const PushUpApp = ({ onBack }) => {
+const SquatApp = ({ onBack }) => {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [isActive, setIsActive] = useState(false);
-  const [pushUpCount, setPushUpCount] = useState(0);
+  const [squatCount, setSquatCount] = useState(0);
   const [targetCount] = useState(20);
   const [isCompleted, setIsCompleted] = useState(false);
   const [webcamRunning, setWebcamRunning] = useState(false);
   const [voice, setVoice] = useState(null);
   const [alert, setAlert] = useState('');
-  const [elbowAngle, setElbowAngle] = useState(0);
+  const [kneeAngle, setKneeAngle] = useState(0);
   const [isInDownPosition, setIsInDownPosition] = useState(false);
-  // Add state to track last spoken count
+  const [stability, setStability] = useState('');
   const [lastSpokenCount, setLastSpokenCount] = useState(-1);
+  const [debugInfo, setDebugInfo] = useState('');
   const speakTimeoutRef = useRef(null);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const pushUpCounterRef = useRef(new PushUpCounter());
+  const squatCounterRef = useRef(new SquatCounter());
   const animationFrameRef = useRef(null);
   const poseLandmarkerRef = useRef(null);
 
@@ -161,20 +192,19 @@ const PushUpApp = ({ onBack }) => {
         const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-            delegate: "CPU", // Changed from GPU to CPU for better compatibility
+            delegate: "CPU",
           },
           runningMode: "VIDEO",
           numPoses: 1,
-          minPoseDetectionConfidence: 0.5,
-          minPosePresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minPoseDetectionConfidence: 0.3, // Lower confidence for better detection
+          minPosePresenceConfidence: 0.3,
+          minTrackingConfidence: 0.3,
         });
         
         poseLandmarkerRef.current = poseLandmarker;
         console.log("PoseLandmarker initialized successfully");
       } catch (error) {
         console.error("Error initializing PoseLandmarker:", error);
-        // Fallback: set a flag to indicate MediaPipe failed
         poseLandmarkerRef.current = null;
       }
     };
@@ -195,21 +225,17 @@ const PushUpApp = ({ onBack }) => {
     loadVoices();
   }, []);
 
-  // Enhanced speak function with debouncing
   const speak = useCallback((text, force = false) => {
     return new Promise((resolve) => {
-      // Clear any existing timeout
       if (speakTimeoutRef.current) {
         clearTimeout(speakTimeoutRef.current);
       }
       
-      // Stop any ongoing speech
       if (speechSynthesis.speaking) {
         speechSynthesis.cancel();
       }
       
       if (voice && 'speechSynthesis' in window && (force || !speechSynthesis.speaking)) {
-        // Add small delay to prevent rapid firing
         speakTimeoutRef.current = setTimeout(() => {
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.voice = voice;
@@ -243,7 +269,7 @@ const PushUpApp = ({ onBack }) => {
       }
     } catch (error) {
       console.error('Error accessing webcam:', error);
-      alert('Please allow camera access to use the push-up counter');
+      alert('Please allow camera access to use the squat counter');
     }
   }, []);
 
@@ -275,195 +301,149 @@ const PushUpApp = ({ onBack }) => {
     const canvasCtx = canvas.getContext('2d');
     
     try {
-      // Detect pose using MediaPipe
       const startTimeMs = performance.now();
       const results = await poseLandmarkerRef.current.detectForVideo(
         video,
         startTimeMs
       );
 
-      // Clear canvas
       canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (results.landmarks && results.landmarks.length > 0) {
         const landmarks = results.landmarks[0];
         
-        // Create DrawingUtils instance here for each frame
         const drawingUtils = new DrawingUtils(canvasCtx);
         
-        // Draw pose landmarks and connections FIRST
         try {
-          // Draw connections (skeleton)
+          // Draw connections
           drawingUtils.drawConnectors(
             landmarks,
             PoseLandmarker.POSE_CONNECTIONS,
             { 
               color: '#00FF00', 
-              lineWidth: 4,
-              visibilityMin: 0.5
+              lineWidth: 3,
+              visibilityMin: 0.3
             }
           );
           
-          // Draw all landmarks as circles
+          // Draw all landmarks
           drawingUtils.drawLandmarks(landmarks, {
             color: '#FF0000',
-            radius: 8,
+            radius: 6,
             fillColor: '#FF0000',
-            visibilityMin: 0.5
+            visibilityMin: 0.3
           });
           
-          // Draw specific key points for push-up with labels
+          // Highlight squat key points with better visibility
           const keyPoints = [
-            { landmark: landmarks[11], label: 'L.Shoulder' },
-            { landmark: landmarks[12], label: 'R.Shoulder' },
-            { landmark: landmarks[13], label: 'L.Elbow' },
-            { landmark: landmarks[14], label: 'R.Elbow' },
-            { landmark: landmarks[15], label: 'L.Wrist' },
-            { landmark: landmarks[16], label: 'R.Wrist' },
+            { landmark: landmarks[23], label: 'L.Hip', color: '#FF00FF' },
+            { landmark: landmarks[24], label: 'R.Hip', color: '#FF00FF' },
+            { landmark: landmarks[25], label: 'L.Knee', color: '#FFFF00' },
+            { landmark: landmarks[26], label: 'R.Knee', color: '#FFFF00' },
+            { landmark: landmarks[27], label: 'L.Ankle', color: '#00FFFF' },
+            { landmark: landmarks[28], label: 'R.Ankle', color: '#00FFFF' },
           ];
           
-          keyPoints.forEach(({ landmark, label }) => {
-            if (landmark && landmark.visibility > 0.5) {
+          keyPoints.forEach(({ landmark, label, color }) => {
+            if (landmark && landmark.visibility > 0.3) {
               const x = landmark.x * canvas.width;
               const y = landmark.y * canvas.height;
               
-              // Draw bigger circle for key points
-              canvasCtx.fillStyle = '#FFFF00';
+              canvasCtx.fillStyle = color;
               canvasCtx.beginPath();
               canvasCtx.arc(x, y, 10, 0, 2 * Math.PI);
               canvasCtx.fill();
               
-              // Draw label
               canvasCtx.fillStyle = '#FFFFFF';
-              canvasCtx.font = '12px Arial';
-              canvasCtx.fillText(label, x + 15, y + 5);
+              canvasCtx.font = 'bold 11px Arial';
+              canvasCtx.strokeStyle = '#000000';
+              canvasCtx.lineWidth = 2;
+              canvasCtx.strokeText(label, x + 12, y + 4);
+              canvasCtx.fillText(label, x + 12, y + 4);
             }
           });
           
         } catch (drawError) {
           console.warn("Drawing error:", drawError);
-          // Enhanced fallback: draw simple but visible skeleton
-          canvasCtx.strokeStyle = '#00FF00';
-          canvasCtx.lineWidth = 3;
-          canvasCtx.fillStyle = '#FF0000';
-          
-          // Draw basic skeleton connections
-          const connections = [
-            [11, 13], [13, 15], // Left arm
-            [12, 14], [14, 16], // Right arm
-            [11, 12], // Shoulders
-            [11, 23], [12, 24], // Shoulder to hip
-            [23, 24] // Hips
-          ];
-          
-          connections.forEach(([start, end]) => {
-            const startPoint = landmarks[start];
-            const endPoint = landmarks[end];
-            if (startPoint && endPoint && startPoint.visibility > 0.5 && endPoint.visibility > 0.5) {
-              canvasCtx.beginPath();
-              canvasCtx.moveTo(startPoint.x * canvas.width, startPoint.y * canvas.height);
-              canvasCtx.lineTo(endPoint.x * canvas.width, endPoint.y * canvas.height);
-              canvasCtx.stroke();
-            }
-          });
-          
-          // Draw landmarks as circles
-          landmarks.forEach((landmark, index) => {
-            if (landmark && landmark.visibility > 0.5) {
-              const x = landmark.x * canvas.width;
-              const y = landmark.y * canvas.height;
-              canvasCtx.beginPath();
-              canvasCtx.arc(x, y, 6, 0, 2 * Math.PI);
-              canvasCtx.fill();
-            }
-          });
         }
         
-        // Process pose for push-up counting
-        const { count, alert: poseAlert, angle, isDown, stability: angleStability, frames, newCount } = pushUpCounterRef.current.processPose(landmarks);
+        // Process pose for squat counting
+        const result = squatCounterRef.current.processPose(landmarks);
+        const { count, alert: poseAlert, angle, isDown, stability: angleStability, frames, newCount, hipPosition, leftAngle, rightAngle } = result;
         
-        // Debug: Log key values
-        console.log('Pose Data:', {
-          angle,
-          isDown,
-          count,
-          frames,
-          newCount,
-          leftElbow: landmarks[13] ? `(${landmarks[13].x.toFixed(2)}, ${landmarks[13].y.toFixed(2)})` : 'missing',
-          rightElbow: landmarks[14] ? `(${landmarks[14].x.toFixed(2)}, ${landmarks[14].y.toFixed(2)})` : 'missing'
-        });
+        // Enhanced debugging
+        const debugString = `L:${leftAngle}° R:${rightAngle}° Avg:${angle}° | Hip:${hipPosition} | Down:${isDown} | Frames:${frames}`;
+        setDebugInfo(debugString);
         
-        // Handle count speech with proper debouncing
+        // Handle count speech
         if (newCount && count !== lastSpokenCount && count > 0) {
           setLastSpokenCount(count);
-          setPushUpCount(count);
+          setSquatCount(count);
           
-          // Speak count with debouncing
           speak(count.toString(), true).catch(() => {});
           
-          // Check if target achieved
           if (count >= targetCount) {
             setIsCompleted(true);
             setIsActive(false);
-            // Speak completion message after a delay
             setTimeout(() => {
-              speak(`Congratulations! You completed ${targetCount} push-ups!`, true).catch(() => {});
+              speak(`Excellent! You completed ${targetCount} squats!`, true).catch(() => {});
             }, 1000);
             return;
           }
-        } else if (count !== pushUpCount) {
-          // Update count state without speaking if not a new count
-          setPushUpCount(count);
+        } else if (count !== squatCount) {
+          setSquatCount(count);
         }
 
-        // Draw angle visualization
-        if (landmarks[11] && landmarks[13] && landmarks[15]) {
-          const shoulder = landmarks[11];
-          const elbow = landmarks[13];
-          const wrist = landmarks[15];
-          
-          const shoulderX = shoulder.x * canvas.width;
-          const shoulderY = shoulder.y * canvas.height;
-          const elbowX = elbow.x * canvas.width;
-          const elbowY = elbow.y * canvas.height;
-          const wristX = wrist.x * canvas.width;
-          const wristY = wrist.y * canvas.height;
-          
-          // Draw angle lines
-          canvasCtx.strokeStyle = '#FFFF00';
-          canvasCtx.lineWidth = 4;
-          canvasCtx.beginPath();
-          canvasCtx.moveTo(shoulderX, shoulderY);
-          canvasCtx.lineTo(elbowX, elbowY);
-          canvasCtx.lineTo(wristX, wristY);
-          canvasCtx.stroke();
-          
-          // Draw angle text
-          canvasCtx.fillStyle = '#FFFF00';
-          canvasCtx.font = 'bold 20px Arial';
-          canvasCtx.fillText(`${angle}°`, elbowX + 20, elbowY - 20);
-        }
+        // Draw knee angle visualization for both legs
+        const drawKneeAngle = (hip, knee, ankle, side, offsetX = 0) => {
+          if (hip && knee && ankle && hip.visibility > 0.3 && knee.visibility > 0.3 && ankle.visibility > 0.3) {
+            const hipX = hip.x * canvas.width;
+            const hipY = hip.y * canvas.height;
+            const kneeX = knee.x * canvas.width;
+            const kneeY = knee.y * canvas.height;
+            const ankleX = ankle.x * canvas.width;
+            const ankleY = ankle.y * canvas.height;
+            
+            // Draw angle lines
+            canvasCtx.strokeStyle = '#FFFF00';
+            canvasCtx.lineWidth = 3;
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(hipX, hipY);
+            canvasCtx.lineTo(kneeX, kneeY);
+            canvasCtx.lineTo(ankleX, ankleY);
+            canvasCtx.stroke();
+            
+            // Draw angle text
+            const angleValue = side === 'L' ? leftAngle : rightAngle;
+            canvasCtx.fillStyle = '#FFFF00';
+            canvasCtx.font = 'bold 16px Arial';
+            canvasCtx.strokeStyle = '#000000';
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeText(`${side}:${angleValue}°`, kneeX + offsetX, kneeY - 25);
+            canvasCtx.fillText(`${side}:${angleValue}°`, kneeX + offsetX, kneeY - 25);
+          }
+        };
 
-        // Update UI states (don't trigger speech here)
+        // Draw angles for both legs
+        drawKneeAngle(landmarks[23], landmarks[25], landmarks[27], 'L', -50);
+        drawKneeAngle(landmarks[24], landmarks[26], landmarks[28], 'R', 20);
+
         if (poseAlert) setAlert(poseAlert);
-        if (angle) setElbowAngle(angle);
+        if (angle) setKneeAngle(angle);
         if (angleStability) setStability(angleStability);
         setIsInDownPosition(isDown);
 
       } else {
-        // No pose detected
-        setAlert("Position yourself in front of the camera");
+        setAlert("Position yourself in front of the camera - ensure full body is visible");
       }
 
-      // Continue detection
       animationFrameRef.current = requestAnimationFrame(detectPose);
     } catch (error) {
       console.error('Error in pose detection:', error);
       setAlert("Pose detection error - retrying...");
-      // Continue even on error
       animationFrameRef.current = requestAnimationFrame(detectPose);
     }
-  }, [webcamRunning, isActive, pushUpCount, targetCount, speak]);
+  }, [webcamRunning, isActive, squatCount, targetCount, speak]);
 
   useEffect(() => {
     if (isActive && webcamRunning) {
@@ -486,7 +466,7 @@ const PushUpApp = ({ onBack }) => {
         setCountdown(newCount);
         
         if (newCount === 0) {
-          speak('Start!');
+          speak('Start squatting!');
         } else {
           speak(newCount.toString());
         }
@@ -510,11 +490,11 @@ const PushUpApp = ({ onBack }) => {
     }
     
     setIsCompleted(false);
-    setPushUpCount(0);
-    pushUpCounterRef.current.resetCount();
+    setSquatCount(0);
+    squatCounterRef.current.resetCount();
     setCountdown(5);
     
-    await speak('Get ready! Starting in 5 seconds');
+    await speak('Get ready for squats! Starting in 5 seconds');
     setIsCountingDown(true);
   };
 
@@ -527,13 +507,13 @@ const PushUpApp = ({ onBack }) => {
     setIsActive(false);
     setIsCountingDown(false);
     setIsCompleted(false);
-    setPushUpCount(0);
+    setSquatCount(0);
     setCountdown(5);
     setAlert('');
-    setElbowAngle(0);
+    setKneeAngle(0);
     setIsInDownPosition(false);
     setStability('');
-    pushUpCounterRef.current.resetCount();
+    squatCounterRef.current.resetCount();
     speak('Workout reset').catch(() => {});
   };
 
@@ -541,7 +521,7 @@ const PushUpApp = ({ onBack }) => {
     <div 
       className="w-full min-h-screen flex flex-col items-center relative"
       style={{
-        background: "linear-gradient(180deg, #667eea 0%, #764ba2 100%)",
+        background: "linear-gradient(180deg, #ff6b6b 0%, #feca57 100%)",
         maxWidth: 430,
         margin: "0 auto",
       }}
@@ -556,12 +536,12 @@ const PushUpApp = ({ onBack }) => {
             <ArrowLeft size={20} />
           </button>
           <h1 className="text-3xl font-bold text-white flex-1 text-center mr-10 ml-5">
-            Push-Up Counter
+            Squat Counter
           </h1>
         </div>
         <div className="flex items-center justify-center gap-2 text-white">
           <Target size={20} />
-          <span className="text-lg">Target: {targetCount} push-ups</span>
+          <span className="text-lg">Target: {targetCount} squats</span>
         </div>
       </div>
 
@@ -592,9 +572,9 @@ const PushUpApp = ({ onBack }) => {
           {/* Completion Overlay */}
           {isCompleted && (
             <div className="absolute inset-0 bg-green-500 bg-opacity-80 flex flex-col items-center justify-center">
-              <div className="text-4xl font-bold text-white mb-2">🎉</div>
+              <div className="text-4xl font-bold text-white mb-2">🏆</div>
               <div className="text-2xl font-bold text-white text-center">
-                Congratulations!<br />
+                Excellent!<br />
                 Target Achieved!
               </div>
             </div>
@@ -606,8 +586,13 @@ const PushUpApp = ({ onBack }) => {
       <div className="bg-opacity-20 rounded-2xl p-6 mx-4 -mt-5 backdrop-blur-sm">
         <div className="text-center">
           <div className="text-4xl text-white opacity-80">
-            {pushUpCount} / {targetCount}  <span className="text-2xl"> push-ups</span>
+            {squatCount} / {targetCount} <span className="text-2xl">squats</span>
           </div>
+          {alert && (
+            <div className="text-sm text-white opacity-70 mt-2">
+              {alert}
+            </div>
+          )}
         </div>
       </div>
 
@@ -616,10 +601,10 @@ const PushUpApp = ({ onBack }) => {
         {!isActive && !isCountingDown && !isCompleted && (
           <button
             onClick={startWorkout}
-            className="bg-white cursor-pointer text-purple-600 px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2 hover:bg-opacity-90 transition-all"
+            className="bg-white text-orange-600 px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2 hover:bg-opacity-90 transition-all"
           >
             <Play size={24} />
-            Start Workout
+            Start Squats
           </button>
         )}
 
@@ -627,7 +612,7 @@ const PushUpApp = ({ onBack }) => {
           <button
             onClick={toggleWorkout}
             disabled={isCountingDown}
-            className="bg-white cursor-pointer text-purple-600 px-6 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-opacity-90 transition-all disabled:opacity-50"
+            className="bg-white text-orange-600 px-6 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-opacity-90 transition-all disabled:opacity-50"
           >
             {isActive ? <Pause size={20} /> : <Play size={20} />}
             {isActive ? 'Pause' : 'Resume'}
@@ -642,6 +627,7 @@ const PushUpApp = ({ onBack }) => {
           Reset
         </button>
       </div>
+
       {/* Status Indicator */}
       <div className="absolute top-4 right-4">
         <div className={`w-3 h-3 rounded-full ${webcamRunning ? 'bg-green-400' : 'bg-red-400'}`} />
@@ -650,4 +636,4 @@ const PushUpApp = ({ onBack }) => {
   );
 };
 
-export default PushUpApp;
+export default SquatApp;
