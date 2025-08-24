@@ -1127,10 +1127,15 @@ const SquatChallengeApp = ({ onBack }) => {
       {phase === 'setup' && (
         <div className="flex-1 flex flex-col">
           {/* Video Container - Portrait */}
-          <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
+          <div className="relative mx-4 mb-4 bg-gray-900 rounded-lg overflow-hidden flex-shrink-0" 
+            style={{ 
+              height: 'calc(100vh - 280px)', // Dynamic height based on screen
+              minHeight: '400px', // Minimum height
+              maxHeight: '500px'  // Maximum height for larger screens
+            }}>
             <video
               ref={videoRef}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               autoPlay
               playsInline
               muted
@@ -1196,10 +1201,15 @@ const SquatChallengeApp = ({ onBack }) => {
       {(phase === 'hydrate' || phase === 'exercise' || phase === 'recovery' || phase === 'go') && (
         <div className="flex-1 flex flex-col">
           {/* Video Container - Portrait */}
-          <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
+          <div className="relative mx-4 mb-4 bg-gray-900 rounded-lg overflow-hidden flex-shrink-0" 
+            style={{ 
+              height: 'calc(100vh - 280px)', // Dynamic height based on screen
+              minHeight: '400px', // Minimum height
+              maxHeight: '500px'  // Maximum height for larger screens
+            }}>
             <video
               ref={videoRef}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               autoPlay
               playsInline
               muted
