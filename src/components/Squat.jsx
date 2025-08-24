@@ -1130,7 +1130,7 @@ const SquatChallengeApp = ({ onBack }) => {
           <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
             <video
               ref={videoRef}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               autoPlay
               playsInline
               muted
@@ -1199,7 +1199,7 @@ const SquatChallengeApp = ({ onBack }) => {
           <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
             <video
               ref={videoRef}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               autoPlay
               playsInline
               muted
