@@ -194,7 +194,7 @@ class SquatCounter {
   }
 }
 
-// Grid Photo Component
+// Grid Photo Component - FIXED VERSION
 const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, onShare, currentRound, squatCount, progressPercent }) => {
   const canvasRef = useRef(null);
   const [gridImage, setGridImage] = useState(null);
@@ -207,16 +207,21 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
-    // Set canvas size for portrait grid (taller aspect ratio)
+    // Set canvas size for portrait grid (taller aspect ratio) - DENGAN LOGO
     canvas.width = 400;
-    canvas.height = 700;
+    canvas.height = 780; // Increased to accommodate logo
     
     // Fill background with black
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Grid area (top 75% of canvas) - portrait photos
-    const gridHeight = canvas.height * 0.75;
+    // Logo area at the top
+    const logoHeight = 80;
+    const logoY = 10;
+    
+    // Grid area starts after logo
+    const gridStartY = logoHeight + 20;
+    const gridHeight = (canvas.height - gridStartY) * 0.75;
     const photoWidth = canvas.width / 2;
     const photoHeight = gridHeight / 2;
     
@@ -231,12 +236,42 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
     };
     
     try {
-      // Draw photos in grid with overlays
+      // Load and draw the logo first
+      try {
+        const logoImg = await loadImage('./assets/LOGO2 1.png');
+        
+        // Calculate logo dimensions to fit within the allocated space
+        const logoAspectRatio = logoImg.width / logoImg.height;
+        let logoDisplayWidth = canvas.width * 0.6; // 60% of canvas width
+        let logoDisplayHeight = logoDisplayWidth / logoAspectRatio;
+        
+        // If height is too large, scale down
+        if (logoDisplayHeight > logoHeight - 20) { // 20px margin
+          logoDisplayHeight = logoHeight - 20;
+          logoDisplayWidth = logoDisplayHeight * logoAspectRatio;
+        }
+        
+        // Center the logo horizontally
+        const logoX = (canvas.width - logoDisplayWidth) / 2;
+        const logoYPos = logoY + (logoHeight - logoDisplayHeight) / 2;
+        
+        // Draw the logo
+        ctx.drawImage(logoImg, logoX, logoYPos, logoDisplayWidth, logoDisplayHeight);
+      } catch (logoError) {
+        console.error('Error loading logo:', logoError);
+        // If logo fails to load, draw fallback text
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('UNLOCK YOUR 100', canvas.width / 2, logoY + logoHeight / 2);
+      }
+
+      // Draw photos in grid with overlays (adjusted Y positions)
       for (let i = 0; i < 4; i++) {
         if (photos[i]) {
           const img = await loadImage(photos[i]);
           const x = (i % 2) * photoWidth;
-          const y = Math.floor(i / 2) * photoHeight;
+          const y = gridStartY + Math.floor(i / 2) * photoHeight; // Adjusted Y position
           
           // Draw photo filling the entire cell
           ctx.drawImage(img, x, y, photoWidth, photoHeight);
@@ -388,8 +423,8 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
       }
       
       // Bottom stats section (bottom 25%) - exactly like the reference image, seamlessly connected
-      const statsStartY = gridHeight;
-      const statsHeight = canvas.height * 0.25;
+      const statsStartY = gridStartY + gridHeight;
+      const statsHeight = canvas.height - statsStartY;
       
       // Stats background (seamless with grid - no border)
       ctx.fillStyle = '#000000';
@@ -489,16 +524,12 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
 
   return (
     <div className="w-full min-h-screen bg-black text-white flex flex-col" style={{ maxWidth: 430, margin: "0 auto" }}>
-      {/* Header */}
+      {/* Header - TANPA LOGO untuk menghindari double logo */}
       <div className="flex items-center justify-between py-4 px-4">
         <button onClick={onBack} className="text-white">
           <ArrowLeft size={24} />
         </button>
-        <img 
-          src="./assets/LOGO2 1.png" 
-          alt="Unlock Your 100 Logo" 
-          className="h-12 object-contain"
-        />
+        <div className="text-white text-lg font-bold">CHALLENGE COMPLETED</div>
         <div className="w-6"></div>
       </div>
 
@@ -547,8 +578,9 @@ const SquatChallengeApp = ({ onBack }) => {
   const [hasSquatPhoto, setHasSquatPhoto] = useState({ round1: false, round2: false });
   const [hasSpokenHydrate, setHasSpokenHydrate] = useState(false);
   const [hasSpokenRecovery, setHasSpokenRecovery] = useState(false);
+  const [hasSpokenCongratulations, setHasSpokenCongratulations] = useState(false); // NEW: prevent double speak
 
-  // Audio functions
+  // FIXED: Audio functions with consistent voice
   const playCountSound = (count) => {
     const numbers = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
                      'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
@@ -557,11 +589,31 @@ const SquatChallengeApp = ({ onBack }) => {
       const utterance = new SpeechSynthesisUtterance(numbers[count]);
       utterance.rate = 1.2;
       utterance.volume = 0.8;
+      // FIXED: Force consistent voice
+      const voices = speechSynthesis.getVoices();
+      const maleVoice = voices.find(voice => 
+        voice.name.toLowerCase().includes('male') || 
+        voice.name.toLowerCase().includes('david') ||
+        voice.name.toLowerCase().includes('mark')
+      );
+      if (maleVoice) {
+        utterance.voice = maleVoice;
+      }
       speechSynthesis.speak(utterance);
     } else if (count <= 99) {
       const utterance = new SpeechSynthesisUtterance(count.toString());
       utterance.rate = 1.2;
       utterance.volume = 0.8;
+      // FIXED: Force consistent voice
+      const voices = speechSynthesis.getVoices();
+      const maleVoice = voices.find(voice => 
+        voice.name.toLowerCase().includes('male') || 
+        voice.name.toLowerCase().includes('david') ||
+        voice.name.toLowerCase().includes('mark')
+      );
+      if (maleVoice) {
+        utterance.voice = maleVoice;
+      }
       speechSynthesis.speak(utterance);
     }
   };
@@ -570,6 +622,16 @@ const SquatChallengeApp = ({ onBack }) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1.0;
     utterance.volume = 0.9;
+    // FIXED: Force consistent voice
+    const voices = speechSynthesis.getVoices();
+    const maleVoice = voices.find(voice => 
+      voice.name.toLowerCase().includes('male') || 
+      voice.name.toLowerCase().includes('david') ||
+      voice.name.toLowerCase().includes('mark')
+    );
+    if (maleVoice) {
+      utterance.voice = maleVoice;
+    }
     speechSynthesis.speak(utterance);
   };
 
@@ -908,8 +970,11 @@ const SquatChallengeApp = ({ onBack }) => {
         setTimeRemaining(10);
         setProgressPercent(0);
       } else {
-        // Round 2 completed - play congratulations speech
-        playAnnouncement('Congratulations! You finished your challenge!');
+        // Round 2 completed - FIXED: play congratulations speech only once
+        if (!hasSpokenCongratulations) {
+          playAnnouncement('Congratulations! You finished your challenge!');
+          setHasSpokenCongratulations(true);
+        }
         setTimeout(() => {
           setPhase('grid'); // Go to grid after speech
         }, 3000); // Wait 3 seconds for speech to complete
@@ -979,7 +1044,7 @@ const SquatChallengeApp = ({ onBack }) => {
       {phase === 'setup' && (
         <div className="flex-1 flex flex-col">
           {/* Video Container - Portrait */}
-          <div className="relative mx-4 mb-6 bg-gray-900 rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
+          <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -1002,7 +1067,7 @@ const SquatChallengeApp = ({ onBack }) => {
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${webcamRunning ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
                   {webcamRunning ? <Check size={60} className="text-[#00FF51]" /> : <X size={60} className="text-[#FF0000]" />}
                 </div>
-                <span className={`text-[30px] font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
+                <span className={`text-[24px] font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
               </div>
 
               {/* FPS Check */}
@@ -1010,7 +1075,7 @@ const SquatChallengeApp = ({ onBack }) => {
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isFpsCompatible ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
                   {isFpsCompatible ? <Check size={60} className="text-[#00FF51]" /> : <X size={60} className="text-[#FF0000]" />}
                 </div>
-                <span className={`text-[30px] font-semibold ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>FPS CHECK</span>
+                <span className={`text-[24px] font-semibold ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>FPS CHECK</span>
               </div>
             </div>
             
@@ -1048,7 +1113,7 @@ const SquatChallengeApp = ({ onBack }) => {
       {(phase === 'hydrate' || phase === 'exercise' || phase === 'recovery' || phase === 'go') && (
         <div className="flex-1 flex flex-col">
           {/* Video Container - Portrait */}
-          <div className="relative mx-4 mb-6 bg-gray-900 rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
+          <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -1063,7 +1128,7 @@ const SquatChallengeApp = ({ onBack }) => {
 
             {phase === 'go' && (
               <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                <div className="text-[100px] font-bold text-[#FF0000] animate-pulse">GO!</div>
+                <div className="text-[80px] font-bold text-[#FF0000] animate-pulse">GO!</div>
               </div>
             )}
 
@@ -1098,10 +1163,10 @@ const SquatChallengeApp = ({ onBack }) => {
                       className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
                       style={{ width: `${progressPercent}%` }}
                     />
-                    <span className="relative z-10 text-[20px] font-bold">HYDRATE AND ENERGIZE</span>
+                    <span className="relative z-10 text-[18px] font-bold">HYDRATE AND ENERGIZE</span>
                   </div>
                   <div className="bg-black bg-opacity-80 text-white px-6 py-1 rounded inline-block">
-                    <span className="text-[20px] font-medium">BEFORE UNLOCK YOUR 100</span>
+                    <span className="text-[16px] font-medium">BEFORE UNLOCK YOUR 100</span>
                   </div>
                 </div>
               </div>
@@ -1136,10 +1201,10 @@ const SquatChallengeApp = ({ onBack }) => {
                       className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
                       style={{ width: `${progressPercent}%` }}
                     />
-                    <span className="relative z-10 text-[20px] font-bold">RECOVER &amp; REPEAT STRONGER</span>
+                    <span className="relative z-10 text-[18px] font-bold">RECOVER &amp; REPEAT STRONGER</span>
                   </div>
                   <div className="bg-black bg-opacity-80 text-white px-6 py-1 rounded inline-block">
-                    <span className="text-[20px] font-medium">IT'S TIME TO</span>
+                    <span className="text-[16px] font-medium">IT'S TIME TO</span>
                   </div>
                 </div>
               </div>
@@ -1150,17 +1215,17 @@ const SquatChallengeApp = ({ onBack }) => {
                 <div className="text-center relative -ml-5">
                   <div className="flex items-center justify-center gap-1">
                     <div className="flex items-center">
-                      <span className="text-white text-[28px] font-bold tracking-wider transform -rotate-90 whitespace-nowrap origin-center">
+                      <span className="text-white text-[24px] font-bold tracking-wider transform -rotate-90 whitespace-nowrap origin-center">
                         ROUND {currentRound}
                       </span>
                     </div>
                     
-                    <div className="text-[150px] font-bold text-[#FF0000] leading-none mx-1">
+                    <div className="text-[100px] font-bold text-[#FF0000] leading-none mx-1">
                       {squatCount}
                     </div>
                     
                     <div className="flex items-end pb-1 ml-1">
-                      <span className="text-[#FF0000] text-5xl font-bold leading-none">REP</span>
+                      <span className="text-[#FF0000] text-3xl font-bold leading-none">REP</span>
                     </div>
                   </div>
                 </div>
