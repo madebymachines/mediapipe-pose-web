@@ -126,13 +126,12 @@ class SquatCounter {
       return false;
     }
 
-    // NEW: Check if body is facing forward (not sideways)
-    // Calculate shoulder width and hip width
+    // Check if body is facing forward (not sideways)
     const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
     const hipWidth = Math.abs(leftHip.x - rightHip.x);
     
     // If shoulders or hips are too narrow, person might be sideways
-    const minBodyWidth = 0.08; // Minimum width to ensure front-facing position
+    const minBodyWidth = 0.08;
     if (shoulderWidth < minBodyWidth || hipWidth < minBodyWidth) {
       return false;
     }
@@ -149,9 +148,8 @@ class SquatCounter {
     }
     
     // Check if both knees are roughly at same horizontal level
-    // (prevents counting when one leg is raised or person is lunging sideways)
     const kneeHeightDifference = Math.abs(leftKnee.y - rightKnee.y);
-    const maxKneeHeightDiff = 0.05; // Allow small difference but not too much
+    const maxKneeHeightDiff = 0.05;
     if (kneeHeightDifference > maxKneeHeightDiff) {
       return false;
     }
@@ -836,72 +834,72 @@ const SquatChallengeApp = ({ onBack }) => {
           drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: '#FFFFFF', lineWidth: 2 });
           drawingUtils.drawLandmarks(landmarks, { color: '#FFFFFF', radius: 4 });
           
-          // FIXED: Debug info positioning - moved to bottom area to avoid overlap
-          const leftHip = landmarks[23];
-          const leftKnee = landmarks[25];
-          const leftAnkle = landmarks[27];
-          const rightHip = landmarks[24];
-          const rightKnee = landmarks[26];
-          const rightAnkle = landmarks[28];
+          // // FIXED: Debug info positioning - moved to bottom area to avoid overlap
+          // const leftHip = landmarks[23];
+          // const leftKnee = landmarks[25];
+          // const leftAnkle = landmarks[27];
+          // const rightHip = landmarks[24];
+          // const rightKnee = landmarks[26];
+          // const rightAnkle = landmarks[28];
           
-          if (leftHip && leftKnee && leftAnkle && rightHip && rightKnee && rightAnkle) {
-            const leftKneeAngle = squatCounterRef.current.calculateAngle(leftHip, leftKnee, leftAnkle);
-            const rightKneeAngle = squatCounterRef.current.calculateAngle(rightHip, rightKnee, rightAnkle);
-            const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
-            const kneeDifference = Math.abs(leftKneeAngle - rightKneeAngle);
-            const standingAngle = squatCounterRef.current.standingKneeAngle || 0;
-            const kneeBend = standingAngle - avgKneeAngle;
+          // if (leftHip && leftKnee && leftAnkle && rightHip && rightKnee && rightAnkle) {
+          //   const leftKneeAngle = squatCounterRef.current.calculateAngle(leftHip, leftKnee, leftAnkle);
+          //   const rightKneeAngle = squatCounterRef.current.calculateAngle(rightHip, rightKnee, rightAnkle);
+          //   const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
+          //   const kneeDifference = Math.abs(leftKneeAngle - rightKneeAngle);
+          //   const standingAngle = squatCounterRef.current.standingKneeAngle || 0;
+          //   const kneeBend = standingAngle - avgKneeAngle;
             
-            // FIXED: Position debug text at bottom of canvas, smaller font
-            const fontSize = Math.max(10, canvas.width * 0.02); // Smaller responsive font
-            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            const debugBoxHeight = fontSize * 10; // Enough space for all debug lines
-            canvasCtx.fillRect(0, canvas.height - debugBoxHeight, canvas.width, debugBoxHeight);
+          //   // FIXED: Position debug text at bottom of canvas, smaller font
+          //   const fontSize = Math.max(10, canvas.width * 0.02); // Smaller responsive font
+          //   canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+          //   const debugBoxHeight = fontSize * 10; // Enough space for all debug lines
+          //   canvasCtx.fillRect(0, canvas.height - debugBoxHeight, canvas.width, debugBoxHeight);
             
-            canvasCtx.fillStyle = '#FFFFFF';
-            canvasCtx.font = `${fontSize}px Arial`;
+          //   canvasCtx.fillStyle = '#FFFFFF';
+          //   canvasCtx.font = `${fontSize}px Arial`;
             
-            const textX = 10;
-            const lineHeight = fontSize + 2;
-            let currentY = canvas.height - debugBoxHeight + lineHeight; // Start from bottom area
+          //   const textX = 10;
+          //   const lineHeight = fontSize + 2;
+          //   let currentY = canvas.height - debugBoxHeight + lineHeight; // Start from bottom area
             
-            canvasCtx.fillText(`L Knee: ${leftKneeAngle.toFixed(1)}°`, textX, currentY);
-            currentY += lineHeight;
-            canvasCtx.fillText(`R Knee: ${rightKneeAngle.toFixed(1)}°`, textX, currentY);
-            currentY += lineHeight;
-            canvasCtx.fillText(`Avg: ${avgKneeAngle.toFixed(1)}°`, textX, currentY);
-            currentY += lineHeight;
-            canvasCtx.fillText(`Difference: ${kneeDifference.toFixed(1)}°`, textX, currentY);
-            currentY += lineHeight;
-            canvasCtx.fillText(`Standing: ${standingAngle.toFixed(1)}°`, textX, currentY);
-            currentY += lineHeight;
-            canvasCtx.fillText(`Knee Bend: ${kneeBend.toFixed(1)}°`, textX, currentY);
-            currentY += lineHeight;
-            canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, textX, currentY);
+          //   canvasCtx.fillText(`L Knee: ${leftKneeAngle.toFixed(1)}°`, textX, currentY);
+          //   currentY += lineHeight;
+          //   canvasCtx.fillText(`R Knee: ${rightKneeAngle.toFixed(1)}°`, textX, currentY);
+          //   currentY += lineHeight;
+          //   canvasCtx.fillText(`Avg: ${avgKneeAngle.toFixed(1)}°`, textX, currentY);
+          //   currentY += lineHeight;
+          //   canvasCtx.fillText(`Difference: ${kneeDifference.toFixed(1)}°`, textX, currentY);
+          //   currentY += lineHeight;
+          //   canvasCtx.fillText(`Standing: ${standingAngle.toFixed(1)}°`, textX, currentY);
+          //   currentY += lineHeight;
+          //   canvasCtx.fillText(`Knee Bend: ${kneeBend.toFixed(1)}°`, textX, currentY);
+          //   currentY += lineHeight;
+          //   canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, textX, currentY);
             
-            // FIXED: Draw angle indicators properly scaled to video
-            canvasCtx.fillStyle = '#FF0000';
-            canvasCtx.font = `${fontSize + 2}px Arial`;
+          //   // FIXED: Draw angle indicators properly scaled to video
+          //   canvasCtx.fillStyle = '#FF0000';
+          //   canvasCtx.font = `${fontSize + 2}px Arial`;
             
-            const leftKneeX = leftKnee.x * canvas.width;
-            const leftKneeY = leftKnee.y * canvas.height;
-            canvasCtx.fillText(`${leftKneeAngle.toFixed(1)}°`, leftKneeX + 5, leftKneeY);
+          //   const leftKneeX = leftKnee.x * canvas.width;
+          //   const leftKneeY = leftKnee.y * canvas.height;
+          //   canvasCtx.fillText(`${leftKneeAngle.toFixed(1)}°`, leftKneeX + 5, leftKneeY);
             
-            const rightKneeX = rightKnee.x * canvas.width;
-            const rightKneeY = rightKnee.y * canvas.height;
-            canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 50, rightKneeY);
+          //   const rightKneeX = rightKnee.x * canvas.width;
+          //   const rightKneeY = rightKnee.y * canvas.height;
+          //   canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 50, rightKneeY);
             
-            // Validation indicators in the debug area
-            currentY += lineHeight;
-            canvasCtx.fillStyle = kneeDifference <= 25 ? '#00FF00' : '#FF0000';
-            canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, textX, currentY);
-            currentY += lineHeight;
+          //   // Validation indicators in the debug area
+          //   currentY += lineHeight;
+          //   canvasCtx.fillStyle = kneeDifference <= 25 ? '#00FF00' : '#FF0000';
+          //   canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, textX, currentY);
+          //   currentY += lineHeight;
             
-            if (standingAngle > 0) {
-              canvasCtx.fillStyle = kneeBend >= 30 ? '#00FF00' : '#FF0000';
-              canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, textX, currentY);
-            }
-          }
+          //   if (standingAngle > 0) {
+          //     canvasCtx.fillStyle = kneeBend >= 30 ? '#00FF00' : '#FF0000';
+          //     canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, textX, currentY);
+          //   }
+          // }
           
           // Process squat counting
           const result = squatCounterRef.current.processPose(landmarks);
@@ -1095,7 +1093,7 @@ const SquatChallengeApp = ({ onBack }) => {
       {phase === 'setup' && (
         <div className="flex-1 flex flex-col">
           {/* FIXED: Video Container with proper relative positioning for canvas overlay */}
-          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
+          <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
             aspectRatio: '3/4',
             maxHeight: 'calc(100vh - 200px)',
           }}>
@@ -1167,7 +1165,7 @@ const SquatChallengeApp = ({ onBack }) => {
       {(phase === 'hydrate' || phase === 'exercise' || phase === 'recovery' || phase === 'go') && (
         <div className="flex-1 flex flex-col">
           {/* FIXED: Video Container with proper relative positioning */}
-          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
+          <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
             aspectRatio: '3/4',
             maxHeight: 'calc(100vh - 180px)', 
           }}>
