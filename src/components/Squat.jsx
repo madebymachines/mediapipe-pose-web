@@ -81,24 +81,47 @@ class SquatCounter {
     return angle;
   }
 
-  isValidSquatPosition(leftKneeAngle, rightKneeAngle, avgKneeAngle) {
+  isValidSquatPosition(leftKneeAngle, rightKneeAngle, avgKneeAngle, landmarks) {
     const kneeDifference = Math.abs(leftKneeAngle - rightKneeAngle);
     if (kneeDifference > this.maxKneeAngleDifference) {
-      console.log(`Invalid: Knee difference too large: ${kneeDifference.toFixed(1)}°`);
       return false;
     }
 
     if (this.standingKneeAngle === null) {
       if (avgKneeAngle >= 165) {
         this.standingKneeAngle = avgKneeAngle;
-        console.log(`Standing angle set: ${this.standingKneeAngle.toFixed(1)}°`);
       }
       return false;
     }
 
     const kneeBend = this.standingKneeAngle - avgKneeAngle;
     if (avgKneeAngle <= this.downKneeAngleThreshold && kneeBend < this.minKneeBend) {
-      console.log(`Invalid: Not enough knee bend: ${kneeBend.toFixed(1)}° (need ${this.minKneeBend}°)`);
+      return false;
+    }
+
+    // NEW: Check if knees are visible and properly positioned
+    const leftKnee = landmarks[25];
+    const rightKnee = landmarks[26];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    
+    // Ensure knees are visible with good confidence
+    if (leftKnee.visibility < 0.5 || rightKnee.visibility < 0.5) {
+      return false;
+    }
+    
+    // Check if knees are positioned below hips (proper squat form)
+    if (leftKnee.y <= leftHip.y || rightKnee.y <= rightHip.y) {
+      return false;
+    }
+    
+    // Check if person is just bending forward (knees should be significantly bent)
+    // If knees are too close to hips horizontally, it might be just bending forward
+    const leftHorizontalDistance = Math.abs(leftKnee.x - leftHip.x);
+    const rightHorizontalDistance = Math.abs(rightKnee.x - rightHip.x);
+    const minHorizontalDistance = 0.05; // Minimum distance to ensure proper knee bend
+    
+    if (leftHorizontalDistance < minHorizontalDistance || rightHorizontalDistance < minHorizontalDistance) {
       return false;
     }
 
@@ -133,20 +156,16 @@ class SquatCounter {
     const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
     const kneeDifference = Math.abs(leftKneeAngle - rightKneeAngle);
 
-    console.log(`L: ${leftKneeAngle.toFixed(1)}° R: ${rightKneeAngle.toFixed(1)}° Avg: ${avgKneeAngle.toFixed(1)}° Diff: ${kneeDifference.toFixed(1)}° IsDown: ${this.isDown}`);
-
     if (avgKneeAngle >= 165 && kneeDifference < 15) {
       this.standingKneeAngle = avgKneeAngle;
     }
 
     if (!this.isDown && avgKneeAngle <= this.downKneeAngleThreshold) {
-      if (this.isValidSquatPosition(leftKneeAngle, rightKneeAngle, avgKneeAngle)) {
+      if (this.isValidSquatPosition(leftKneeAngle, rightKneeAngle, avgKneeAngle, landmarks)) {
         this.stateFrames++;
-        console.log(`Going DOWN - Frames: ${this.stateFrames}/${this.minFrames}`);
         if (this.stateFrames >= this.minFrames) {
           this.isDown = true;
           this.stateFrames = 0;
-          console.log("SQUAT DOWN detected");
           return { count: this.count, isSquatDown: true };
         }
       } else {
@@ -156,12 +175,10 @@ class SquatCounter {
     else if (this.isDown && avgKneeAngle >= this.upKneeAngleThreshold) {
       if (kneeDifference <= this.maxKneeAngleDifference) {
         this.stateFrames++;
-        console.log(`Going UP - Frames: ${this.stateFrames}/${this.minFrames}`);
         if (this.stateFrames >= this.minFrames) {
           this.isDown = false;
           this.count++;
           this.stateFrames = 0;
-          console.log("SQUAT UP detected - Count:", this.count);
           return { count: this.count, newCount: true };
         }
       } else {
