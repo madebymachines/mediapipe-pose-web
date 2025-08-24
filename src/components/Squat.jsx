@@ -99,11 +99,13 @@ class SquatCounter {
       return false;
     }
 
-    // NEW: Check if knees are visible and properly positioned
+    // Check if knees are visible and properly positioned
     const leftKnee = landmarks[25];
     const rightKnee = landmarks[26];
     const leftHip = landmarks[23];
     const rightHip = landmarks[24];
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
     
     // Ensure knees are visible with good confidence
     if (leftKnee.visibility < 0.5 || rightKnee.visibility < 0.5) {
@@ -116,12 +118,41 @@ class SquatCounter {
     }
     
     // Check if person is just bending forward (knees should be significantly bent)
-    // If knees are too close to hips horizontally, it might be just bending forward
     const leftHorizontalDistance = Math.abs(leftKnee.x - leftHip.x);
     const rightHorizontalDistance = Math.abs(rightKnee.x - rightHip.x);
-    const minHorizontalDistance = 0.05; // Minimum distance to ensure proper knee bend
+    const minHorizontalDistance = 0.05;
     
     if (leftHorizontalDistance < minHorizontalDistance || rightHorizontalDistance < minHorizontalDistance) {
+      return false;
+    }
+
+    // NEW: Check if body is facing forward (not sideways)
+    // Calculate shoulder width and hip width
+    const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
+    const hipWidth = Math.abs(leftHip.x - rightHip.x);
+    
+    // If shoulders or hips are too narrow, person might be sideways
+    const minBodyWidth = 0.08; // Minimum width to ensure front-facing position
+    if (shoulderWidth < minBodyWidth || hipWidth < minBodyWidth) {
+      return false;
+    }
+    
+    // Check if shoulders and hips are roughly aligned (not twisted)
+    const shoulderCenter = (leftShoulder.x + rightShoulder.x) / 2;
+    const hipCenter = (leftHip.x + rightHip.x) / 2;
+    const bodyAlignment = Math.abs(shoulderCenter - hipCenter);
+    
+    // If body is too twisted/misaligned, reject
+    const maxBodyMisalignment = 0.1;
+    if (bodyAlignment > maxBodyMisalignment) {
+      return false;
+    }
+    
+    // Check if both knees are roughly at same horizontal level
+    // (prevents counting when one leg is raised or person is lunging sideways)
+    const kneeHeightDifference = Math.abs(leftKnee.y - rightKnee.y);
+    const maxKneeHeightDiff = 0.05; // Allow small difference but not too much
+    if (kneeHeightDifference > maxKneeHeightDiff) {
       return false;
     }
 
