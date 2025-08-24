@@ -769,8 +769,8 @@ const SquatChallengeApp = ({ onBack }) => {
       }
     }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.clientWidth;
+    canvas.height = video.clientHeight;
     const canvasCtx = canvas.getContext('2d');
     
     try {
