@@ -608,65 +608,6 @@ const SquatChallengeApp = ({ onBack }) => {
               (lang.includes('en') || lang.includes('id'));
       });
       
-      // Priority 2: Jika tidak ada, cari berdasarkan bahasa dan gender hint
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice => {
-          const name = voice.name.toLowerCase();
-          const lang = voice.lang.toLowerCase();
-          return (lang.includes('en-us') || lang.includes('en-gb') || lang.includes('id')) && 
-                !name.includes('female') && 
-                !name.includes('woman') && 
-                !name.includes('siri') &&
-                !name.includes('zira') &&
-                !name.includes('hazel');
-        });
-      }
-      
-      // Priority 3: Pilih voice pertama yang bukan explicitly female
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice => {
-          const name = voice.name.toLowerCase();
-          return !name.includes('female') && 
-                !name.includes('woman') && 
-                !name.includes('siri') &&
-                !name.includes('zira') &&
-                !name.includes('hazel') &&
-                !name.includes('cortana');
-        });
-      }
-      
-      // Priority 4: Force pitch untuk membuat suara lebih rendah (masculine)
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
-      utterance.pitch = 0.8; // Pitch lebih rendah untuk suara maskulin
-      
-      console.log('Selected voice:', selectedVoice ? selectedVoice.name : 'default', 'for count:', count);
-      speechSynthesis.speak(utterance);
-      
-    } else if (count <= 99) {
-      const utterance = new SpeechSynthesisUtterance(count.toString());
-      utterance.rate = 1.2;
-      utterance.volume = 0.8;
-      utterance.pitch = 0.8; // Pitch lebih rendah
-      
-      // Gunakan logika yang sama untuk pemilihan voice
-      const voices = speechSynthesis.getVoices();
-      
-      let selectedVoice = voices.find(voice => {
-        const name = voice.name.toLowerCase();
-        const lang = voice.lang.toLowerCase();
-        return (name.includes('male') || 
-                name.includes('david') || 
-                name.includes('mark') || 
-                name.includes('alex') ||
-                name.includes('daniel') ||
-                name.includes('fred') ||
-                name.includes('jorge') ||
-                name.includes('thomas')) && 
-              (lang.includes('en') || lang.includes('id'));
-      });
-      
       if (!selectedVoice) {
         selectedVoice = voices.find(voice => {
           const name = voice.name.toLowerCase();
@@ -788,14 +729,15 @@ const SquatChallengeApp = ({ onBack }) => {
     initializePoseLandmarker();
   }, []);
 
-  // Start webcam
+  // Start webcam - FIXED: Mobile optimized constraints
   const startWebcam = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          width: 480,
-          height: 640,
-          facingMode: 'user'
+          width: { min: 320, ideal: 480, max: 640 },
+          height: { min: 240, ideal: 640, max: 480 },
+          facingMode: 'user',
+          frameRate: { ideal: 30, max: 30 }
         } 
       });
       
@@ -852,8 +794,9 @@ const SquatChallengeApp = ({ onBack }) => {
       }
     }
 
-    canvas.width = video.clientWidth;
-    canvas.height = video.clientHeight;
+    // FIXED: Canvas sizing to match video dimensions exactly
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const canvasCtx = canvas.getContext('2d');
     
     try {
@@ -866,7 +809,7 @@ const SquatChallengeApp = ({ onBack }) => {
         const landmarks = results.landmarks[0];
         
         if (phase === 'exercise') {
-          // Draw skeleton WITHOUT flipping - this will make it follow body movement correctly
+          // FIXED: Draw skeleton with proper scaling
           const drawingUtils = new DrawingUtils(canvasCtx);
           drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: '#FFFFFF', lineWidth: 2 });
           drawingUtils.drawLandmarks(landmarks, { color: '#FFFFFF', radius: 4 });
@@ -887,50 +830,50 @@ const SquatChallengeApp = ({ onBack }) => {
             const standingAngle = squatCounterRef.current.standingKneeAngle || 0;
             const kneeBend = standingAngle - avgKneeAngle;
             
-            // Draw debug info (existing code)
+            // FIXED: Scale debug text for mobile
             canvasCtx.fillStyle = '#FFFFFF';
-            canvasCtx.font = '14px Arial';
+            canvasCtx.font = '10px Arial';
             canvasCtx.fillText(`L Knee: ${leftKneeAngle.toFixed(1)}°`, 10, 25);
-            canvasCtx.fillText(`R Knee: ${rightKneeAngle.toFixed(1)}°`, 10, 45);
-            canvasCtx.fillText(`Avg: ${avgKneeAngle.toFixed(1)}°`, 10, 65);
-            canvasCtx.fillText(`Difference: ${kneeDifference.toFixed(1)}°`, 10, 85);
-            canvasCtx.fillText(`Standing: ${standingAngle.toFixed(1)}°`, 10, 105);
-            canvasCtx.fillText(`Knee Bend: ${kneeBend.toFixed(1)}°`, 10, 125);
-            canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, 10, 145);
+            canvasCtx.fillText(`R Knee: ${rightKneeAngle.toFixed(1)}°`, 10, 40);
+            canvasCtx.fillText(`Avg: ${avgKneeAngle.toFixed(1)}°`, 10, 55);
+            canvasCtx.fillText(`Difference: ${kneeDifference.toFixed(1)}°`, 10, 70);
+            canvasCtx.fillText(`Standing: ${standingAngle.toFixed(1)}°`, 10, 85);
+            canvasCtx.fillText(`Knee Bend: ${kneeBend.toFixed(1)}°`, 10, 100);
+            canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, 10, 115);
             
-            // Draw angle indicators
+            // FIXED: Draw angle indicators with proper scaling
             canvasCtx.fillStyle = '#FF0000';
-            canvasCtx.font = '12px Arial';
+            canvasCtx.font = '8px Arial';
             
             const leftKneeX = leftKnee.x * canvas.width;
             const leftKneeY = leftKnee.y * canvas.height;
-            canvasCtx.fillText(`${leftKneeAngle.toFixed(1)}°`, leftKneeX + 10, leftKneeY);
+            canvasCtx.fillText(`${leftKneeAngle.toFixed(1)}°`, leftKneeX + 5, leftKneeY);
             
             const rightKneeX = rightKnee.x * canvas.width;
             const rightKneeY = rightKnee.y * canvas.height;
-            canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 50, rightKneeY);
+            canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 30, rightKneeY);
             
             // Validation indicators
             canvasCtx.fillStyle = kneeDifference <= 25 ? '#FFFFFF' : '#FF0000';
-            canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, 10, 175);
+            canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, 10, 135);
             
             canvasCtx.fillStyle = avgKneeAngle <= 135 ? '#FFFFFF' : '#FFFF00';
-            canvasCtx.fillText(`Down: ≤135° (${avgKneeAngle <= 135 ? 'OK' : 'NO'})`, 10, 195);
+            canvasCtx.fillText(`Down: ≤135° (${avgKneeAngle <= 135 ? 'OK' : 'NO'})`, 10, 150);
             
             canvasCtx.fillStyle = avgKneeAngle >= 160 ? '#FFFFFF' : '#FFFF00';
-            canvasCtx.fillText(`Up: ≥160° (${avgKneeAngle >= 160 ? 'OK' : 'NO'})`, 10, 215);
+            canvasCtx.fillText(`Up: ≥160° (${avgKneeAngle >= 160 ? 'OK' : 'NO'})`, 10, 165);
             
             if (standingAngle > 0) {
               canvasCtx.fillStyle = kneeBend >= 30 ? '#FFFFFF' : '#FF0000';
-              canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, 10, 235);
+              canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, 10, 180);
             }
             
             if (!squatCounterRef.current.isDown) {
               canvasCtx.fillStyle = '#FFFFFF';
-              canvasCtx.fillText(`Need: Both knees squat to ≤135°`, 10, 260);
+              canvasCtx.fillText(`Need: Both knees squat to ≤135°`, 10, 200);
             } else {
               canvasCtx.fillStyle = '#FFFFFF';
-              canvasCtx.fillText(`Need: Both knees stand to ≥160°`, 10, 260);
+              canvasCtx.fillText(`Need: Both knees stand to ≥160°`, 10, 200);
             }
           }
           
@@ -1114,20 +1057,27 @@ const SquatChallengeApp = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full min-h-screen bg-black text-white flex flex-col" style={{ maxWidth: 430, margin: "0 auto" }}>
-      {/* Header */}
-      <div className="flex items-center justify-center py-4 relative">
+    <div className="w-full bg-black text-white flex flex-col" style={{ 
+      maxWidth: '430px', 
+      margin: "0 auto",
+      minHeight: '100vh',
+    }}>
+      {/* Header - FIXED: Reduce height for mobile */}
+      <div className="flex items-center justify-center py-2 relative flex-shrink-0">
         <img 
           src="./assets/LOGO2 1.png" 
           alt="Unlock Your 100 Logo" 
-          className="h-16 object-contain"
+          className="h-12 object-contain"
         />
       </div>
 
       {phase === 'setup' && (
         <div className="flex-1 flex flex-col">
-          {/* Video Container - Portrait */}
-          <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
+          {/* Video Container - FIXED: Mobile viewport optimized */}
+          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
+            aspectRatio: '3/4',
+            maxHeight: 'calc(100vh - 200px)', // Ensure it fits in viewport
+          }}>
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -1137,28 +1087,28 @@ const SquatChallengeApp = ({ onBack }) => {
             />
             <canvas
               ref={canvasRef}
-              className="absolute top-0 left-0 w-full h-full"
+              className="absolute top-0 left-0 w-full h-full pointer-events-none"
             />
           </div>
 
           {/* Status Checks */}
-          <div className="mx-4 mb-6">
+          <div className="mx-4 mb-4">
             {/* Camera and FPS Check - Side by Side */}
             <div className="flex items-center justify-between gap-8 mb-4">
               {/* Camera Check */}
               <div className="flex items-center gap-2">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${webcamRunning ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
-                  {webcamRunning ? <Check size={60} className="text-[#00FF51]" /> : <X size={60} className="text-[#FF0000]" />}
+                  {webcamRunning ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
                 </div>
-                <span className={`text-[24px] font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
+                <span className={`text-lg font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
               </div>
 
               {/* FPS Check */}
               <div className="flex items-center gap-2">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isFpsCompatible ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
-                  {isFpsCompatible ? <Check size={60} className="text-[#00FF51]" /> : <X size={60} className="text-[#FF0000]" />}
+                  {isFpsCompatible ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
                 </div>
-                <span className={`text-[24px] font-semibold ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>FPS CHECK</span>
+                <span className={`text-lg font-semibold ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>FPS CHECK</span>
               </div>
             </div>
             
@@ -1171,7 +1121,7 @@ const SquatChallengeApp = ({ onBack }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="mx-4 mb-8 flex gap-4">
+          <div className="mx-4 mb-4 flex gap-4">
             <button
               onClick={onBack}
               className="flex-1 bg-transparent border border-gray-600 text-white py-3 px-6 rounded font-bold hover:bg-gray-800 transition-colors"
@@ -1195,8 +1145,11 @@ const SquatChallengeApp = ({ onBack }) => {
 
       {(phase === 'hydrate' || phase === 'exercise' || phase === 'recovery' || phase === 'go') && (
         <div className="flex-1 flex flex-col">
-          {/* Video Container - Portrait */}
-          <div className="relative mx-4 mb-6 bg-transparent rounded-lg overflow-hidden" style={{ aspectRatio: '3/4' }}>
+          {/* Video Container - FIXED: Mobile viewport optimized */}
+          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
+            aspectRatio: '3/4',
+            maxHeight: 'calc(100vh - 180px)', 
+          }}>
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -1206,22 +1159,60 @@ const SquatChallengeApp = ({ onBack }) => {
             />
             <canvas
               ref={canvasRef}
-              className="absolute top-0 left-0 w-full h-full"
+              className="absolute top-0 left-0 w-full h-full pointer-events-none"
             />
 
             {phase === 'go' && (
               <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                <div className="text-[80px] font-bold text-[#FF0000] animate-pulse">GO!</div>
+                <div className="text-6xl font-bold text-[#FF0000] animate-pulse">GO!</div>
               </div>
             )}
 
             {/* Hydrate Phase Overlay - positioned lower */}
             {phase === 'hydrate' && (
-              <div className="absolute inset-0 flex flex-col justify-end items-center pb-20">
+              <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
                 {/* Main Title with Progress Fill */}
                 <div className="text-center relative">
                   {/* Animated Bottle Icon - positioned above the box */}
-                  <div className="absolute -top-12 left-0 w-12 h-12 transform transition-transform duration-1000 ease-linear"
+                  <div className="absolute -top-10 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
+                       style={{ 
+                         transform: `translateX(${progressPercent * 1.8}px)` 
+                       }}>
+                    <img 
+                      src="./assets/BOTTLE 2.png" 
+                      alt="Bottle" 
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div className="w-full h-full bg-gray-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
+                      <div className="w-3 h-6 bg-white rounded-sm relative">
+                        <div className="w-1.5 h-1.5 bg-gray-400 absolute -top-0.5 left-1/2 transform -translate-x-1/2 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative bg-gray-800 text-white px-4 py-2 rounded mb-2 overflow-hidden">
+                    <div 
+                      className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                    <span className="relative z-10 text-sm font-bold">HYDRATE AND ENERGIZE</span>
+                  </div>
+                  <div className="bg-black bg-opacity-80 text-white px-4 py-1 rounded inline-block">
+                    <span className="text-xs font-medium">BEFORE UNLOCK YOUR 100</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recovery Phase Overlay - positioned lower with bottle animation */}
+            {phase === 'recovery' && (
+              <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
+                <div className="text-center relative">
+                  <div className="absolute -top-10 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
                        style={{ 
                          transform: `translateX(${progressPercent * 2.2}px)` 
                        }}>
@@ -1235,80 +1226,42 @@ const SquatChallengeApp = ({ onBack }) => {
                       }}
                     />
                     <div className="w-full h-full bg-gray-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
-                      <div className="w-4 h-8 bg-white rounded-sm relative">
-                        <div className="w-2 h-2 bg-gray-400 absolute -top-0.5 left-1/2 transform -translate-x-1/2 rounded-full"></div>
+                      <div className="w-3 h-6 bg-white rounded-sm relative">
+                        <div className="w-1.5 h-1.5 bg-gray-400 absolute -top-0.5 left-1/2 transform -translate-x-1/2 rounded-full"></div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="relative bg-gray-800 text-white px-6 py-2 rounded mb-2 overflow-hidden">
+                  <div className="relative bg-gray-800 text-white px-4 py-2 rounded mb-2 overflow-hidden">
                     <div 
                       className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
                       style={{ width: `${progressPercent}%` }}
                     />
-                    <span className="relative z-10 text-[18px] font-bold">HYDRATE AND ENERGIZE</span>
+                    <span className="relative z-10 text-sm font-bold">RECOVER &amp; REPEAT STRONGER</span>
                   </div>
-                  <div className="bg-black bg-opacity-80 text-white px-6 py-1 rounded inline-block">
-                    <span className="text-[16px] font-medium">BEFORE UNLOCK YOUR 100</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Recovery Phase Overlay - positioned lower with bottle animation */}
-            {phase === 'recovery' && (
-              <div className="absolute inset-0 flex flex-col justify-end items-center pb-20">
-                <div className="text-center relative">
-                  <div className="absolute -top-12 left-0 w-12 h-12 transform transition-transform duration-1000 ease-linear"
-                       style={{ 
-                         transform: `translateX(${progressPercent * 2.8}px)` 
-                       }}>
-                    <img 
-                      src="./assets/BOTTLE 2.png" 
-                      alt="Bottle" 
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                    <div className="w-full h-full bg-gray-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
-                      <div className="w-4 h-8 bg-white rounded-sm relative">
-                        <div className="w-2 h-2 bg-gray-400 absolute -top-0.5 left-1/2 transform -translate-x-1/2 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="relative bg-gray-800 text-white px-6 py-2 rounded mb-2 overflow-hidden">
-                    <div 
-                      className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                    <span className="relative z-10 text-[18px] font-bold">RECOVER &amp; REPEAT STRONGER</span>
-                  </div>
-                  <div className="bg-black bg-opacity-80 text-white px-6 py-1 rounded inline-block">
-                    <span className="text-[16px] font-medium">IT'S TIME TO</span>
+                  <div className="bg-black bg-opacity-80 text-white px-4 py-1 rounded inline-block">
+                    <span className="text-xs font-medium">IT'S TIME TO</span>
                   </div>
                 </div>
               </div>
             )}
 
             {phase === 'exercise' && (
-              <div className="absolute inset-0 flex flex-col justify-end items-center pb-20">
-                <div className="text-center relative -ml-5">
+              <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
+                <div className="text-center relative -ml-3">
                   <div className="flex items-center justify-center gap-1">
                     <div className="flex items-center">
-                      <span className="text-white text-[24px] font-bold tracking-wider transform -rotate-90 whitespace-nowrap origin-center">
+                      <span className="text-white text-lg font-bold tracking-wider transform -rotate-90 whitespace-nowrap origin-center">
                         ROUND {currentRound}
                       </span>
                     </div>
                     
-                    <div className="text-[100px] font-bold text-[#FF0000] leading-none mx-1">
+                    <div className="text-6xl font-bold text-[#FF0000] leading-none mx-1">
                       {squatCount}
                     </div>
                     
                     <div className="flex items-end pb-1 ml-1">
-                      <span className="text-[#FF0000] text-3xl font-bold leading-none">REP</span>
+                      <span className="text-[#FF0000] text-2xl font-bold leading-none">REP</span>
                     </div>
                   </div>
                 </div>
@@ -1317,7 +1270,7 @@ const SquatChallengeApp = ({ onBack }) => {
           </div>
 
           {/* Progress Bar */}
-          <div className="mx-4 mb-4">
+          <div className="mx-4 mb-2">
             <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-[#FF0000] transition-all duration-1000 ease-linear"
@@ -1326,35 +1279,35 @@ const SquatChallengeApp = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Timer */}
-          <div className="mb-8 mx-4">
+          {/* Timer - FIXED: Mobile optimized sizing */}
+          <div className="mb-4 mx-4">
             {phase === 'hydrate' && (
-              <div className="flex items-center justify-end gap-4">
+              <div className="flex items-center justify-end gap-2">
                 <div className="text-white text-right">
-                  <div className="text-[20px] text-[#636363] font-bold">YOUR FIRST SET</div>
-                  <div className="text-[20px] text-[#636363] font-bold">BEGINS IN</div>
+                  <div className="text-sm text-[#636363] font-bold">YOUR FIRST SET</div>
+                  <div className="text-sm text-[#636363] font-bold">BEGINS IN</div>
                 </div>
-                <div className="text-8xl font-bold text-[#636363]">{timeRemaining}</div>
+                <div className="text-5xl font-bold text-[#636363]">{timeRemaining}</div>
               </div>
             )}
             
             {phase === 'recovery' && (
-              <div className="flex items-center justify-end gap-4">
+              <div className="flex items-center justify-end gap-2">
                 <div className="text-white text-right">
-                  <div className="text-[20px] text-[#636363] font-bold">YOUR 2nd SET</div>
-                  <div className="text-[20px] text-[#636363] font-bold">BEGINS IN</div>
+                  <div className="text-sm text-[#636363] font-bold">YOUR 2nd SET</div>
+                  <div className="text-sm text-[#636363] font-bold">BEGINS IN</div>
                 </div>
-                <div className="text-8xl font-bold text-[#636363]">{timeRemaining}</div>
+                <div className="text-5xl font-bold text-[#636363]">{timeRemaining}</div>
               </div>
             )}
             
             {phase === 'exercise' && (
-              <div className="flex items-center justify-end gap-4">
+              <div className="flex items-center justify-end gap-2">
                 <div className="text-white text-right">
-                  <div className="text-[20px] text-[#636363] font-bold">TIME</div>
-                  <div className="text-[20px] text-[#636363] font-bold">REMAINING</div>
+                  <div className="text-sm text-[#636363] font-bold">TIME</div>
+                  <div className="text-sm text-[#636363] font-bold">REMAINING</div>
                 </div>
-                <div className="text-8xl font-bold text-[#636363]">{timeRemaining}</div>
+                <div className="text-5xl font-bold text-[#636363]">{timeRemaining}</div>
               </div>
             )}
           </div>
