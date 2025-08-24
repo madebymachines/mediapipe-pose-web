@@ -316,9 +316,9 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
             ctx.fillText('BEFORE UNLOCK YOUR 100', x + photoWidth/2, blackBannerY + 15);
           } 
           else if (i === 1) {
-            // Foto kedua (atas kanan) - HANYA ROUND 1 + count + REP
-            const counterAreaY = y + photoHeight * 0.65; // Dipindah dari 0.75 ke 0.65 untuk memberi jarak bottom
-            const counterAreaHeight = photoHeight * 0.30; // Diperbesar area untuk memberi ruang
+            // Foto kedua (atas kanan) - HANYA ROUND 1 + count + REP - POSISI DIPERBAIKI
+            const counterAreaY = y + photoHeight * 0.55; // Dipindah lebih ke atas dari 0.65 ke 0.55
+            const counterAreaHeight = photoHeight * 0.40; // Diperbesar area untuk memberi ruang lebih
             
             // Get actual count
             const actualCount = round1Count;
@@ -331,7 +331,7 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
             ctx.fillStyle = '#FFFFFF';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.translate(x + 50, centerY - 10);
+            ctx.translate(x + 45, centerY - 20); // Dipindah lebih ke atas
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('ROUND 1', 0, 0);
             ctx.restore();
@@ -340,13 +340,13 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
             ctx.fillStyle = '#FF0000';
             ctx.font = 'bold 50px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY + 2);
+            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8); // Dipindah lebih ke atas
             
             // "REP" text - di kanan
             ctx.fillStyle = '#FF0000';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'left';
-            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 5);
+            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15); // Dipindah lebih ke atas
           }
           else if (i === 2) {
             // Foto ketiga (bawah kiri) - HANYA RECOVERY & REPEAT STRONGER
@@ -387,9 +387,9 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
             ctx.fillText("IT'S TIME TO", x + photoWidth/2, blackBannerY + 15);
           }
           else if (i === 3) {
-            // Foto keempat (bawah kanan) - ROUND 2 + count + REP
-            const counterAreaY = y + photoHeight * 0.65; // Dipindah dari 0.75 ke 0.65 untuk memberi jarak bottom
-            const counterAreaHeight = photoHeight * 0.30; // Diperbesar area untuk memberi ruang
+            // Foto keempat (bawah kanan) - ROUND 2 + count + REP - POSISI DIPERBAIKI
+            const counterAreaY = y + photoHeight * 0.55; // Dipindah lebih ke atas dari 0.65 ke 0.55
+            const counterAreaHeight = photoHeight * 0.40; // Diperbesar area untuk memberi ruang lebih
             
             // Get actual count
             const actualCount = round2Count;
@@ -402,7 +402,7 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
             ctx.fillStyle = '#FFFFFF';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.translate(x + 50, centerY - 10);
+            ctx.translate(x + 45, centerY - 20); // Dipindah lebih ke atas
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('ROUND 2', 0, 0);
             ctx.restore();
@@ -411,13 +411,13 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
             ctx.fillStyle = '#FF0000';
             ctx.font = 'bold 50px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY + 2);
+            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8); // Dipindah lebih ke atas
             
             // "REP" text - di kanan
             ctx.fillStyle = '#FF0000';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'left';
-            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 5);
+            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15); // Dipindah lebih ke atas
           }
         }
       }
@@ -578,85 +578,139 @@ const SquatChallengeApp = ({ onBack }) => {
   const [hasSquatPhoto, setHasSquatPhoto] = useState({ round1: false, round2: false });
   const [hasSpokenHydrate, setHasSpokenHydrate] = useState(false);
   const [hasSpokenRecovery, setHasSpokenRecovery] = useState(false);
-  const [hasSpokenCongratulations, setHasSpokenCongratulations] = useState(false); // NEW: prevent double speak
+  const [hasSpokenCongratulations, setHasSpokenCongratulations] = useState(false);
 
-  // FIXED: Audio functions with consistent voice
+  // FIXED: Audio functions with mobile-friendly approach
   const playCountSound = (count) => {
+    // Check if we're on mobile
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
     const numbers = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
                     'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
     
     if (count <= 20) {
-      const utterance = new SpeechSynthesisUtterance(numbers[count]);
-      utterance.rate = 1.2;
-      utterance.volume = 0.8;
+      // Cancel any ongoing speech
+      speechSynthesis.cancel();
       
-      // PERBAIKAN: Logika pemilihan voice yang lebih robust
-      const voices = speechSynthesis.getVoices();
-      
-      // Priority 1: Cari voice laki-laki berdasarkan nama yang lebih lengkap
-      let selectedVoice = voices.find(voice => {
-        const name = voice.name.toLowerCase();
-        const lang = voice.lang.toLowerCase();
-        return (name.includes('male') || 
-                name.includes('david') || 
-                name.includes('mark') || 
-                name.includes('alex') ||
-                name.includes('daniel') ||
-                name.includes('fred') ||
-                name.includes('jorge') ||
-                name.includes('thomas')) && 
-              (lang.includes('en') || lang.includes('id'));
-      });
-      
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice => {
-          const name = voice.name.toLowerCase();
-          const lang = voice.lang.toLowerCase();
-          return (lang.includes('en-us') || lang.includes('en-gb') || lang.includes('id')) && 
-                !name.includes('female') && 
-                !name.includes('woman') && 
-                !name.includes('siri') &&
-                !name.includes('zira') &&
-                !name.includes('hazel');
-        });
-      }
-      
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice => {
-          const name = voice.name.toLowerCase();
-          return !name.includes('female') && 
-                !name.includes('woman') && 
-                !name.includes('siri') &&
-                !name.includes('zira') &&
-                !name.includes('hazel') &&
-                !name.includes('cortana');
-        });
-      }
-      
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
-      
-      console.log('Selected voice:', selectedVoice ? selectedVoice.name : 'default', 'for count:', count);
-      speechSynthesis.speak(utterance);
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(numbers[count]);
+        utterance.rate = 1.2;
+        utterance.volume = 0.8;
+        
+        // FIXED: Mobile-optimized voice selection
+        const setupVoice = () => {
+          const voices = speechSynthesis.getVoices();
+          
+          if (voices.length === 0) {
+            // Try again later if voices aren't loaded yet
+            setTimeout(setupVoice, 100);
+            return;
+          }
+          
+          let selectedVoice = null;
+          
+          if (isMobile) {
+            // For mobile: prefer system default or Google voices
+            selectedVoice = voices.find(voice => {
+              const name = voice.name.toLowerCase();
+              const lang = voice.lang.toLowerCase();
+              return (lang.includes('en-us') || lang.includes('en-gb')) && 
+                     (name.includes('google') || voice.default);
+            });
+          } else {
+            // For desktop: try to find male voice
+            selectedVoice = voices.find(voice => {
+              const name = voice.name.toLowerCase();
+              const lang = voice.lang.toLowerCase();
+              return (name.includes('male') || 
+                      name.includes('david') || 
+                      name.includes('mark') || 
+                      name.includes('alex')) && 
+                    (lang.includes('en') || lang.includes('id'));
+            });
+          }
+          
+          // Fallback to any English voice
+          if (!selectedVoice) {
+            selectedVoice = voices.find(voice => {
+              const lang = voice.lang.toLowerCase();
+              return lang.includes('en-us') || lang.includes('en-gb');
+            });
+          }
+          
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+          }
+          
+          console.log('Selected voice:', selectedVoice ? selectedVoice.name : 'default', 'for count:', count);
+          speechSynthesis.speak(utterance);
+        };
+        
+        setupVoice();
+      }, 50); // Small delay to ensure previous speech is cancelled
     }
   };
 
   const playAnnouncement = (text) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.volume = 0.9;
-    // FIXED: Force consistent voice
-    const voices = speechSynthesis.getVoices();
-    const maleVoice = voices.find(voice => 
-      voice.name.toLowerCase().includes('male') || 
-      voice.name.toLowerCase().includes('david') ||
-      voice.name.toLowerCase().includes('mark')
-    );
-    if (maleVoice) {
-      utterance.voice = maleVoice;
-    }
-    speechSynthesis.speak(utterance);
+    // Check if we're on mobile
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Cancel any ongoing speech
+    speechSynthesis.cancel();
+    
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.volume = 0.9;
+      
+      const setupVoice = () => {
+        const voices = speechSynthesis.getVoices();
+        
+        if (voices.length === 0) {
+          setTimeout(setupVoice, 100);
+          return;
+        }
+        
+        let selectedVoice = null;
+        
+        if (isMobile) {
+          // For mobile: prefer system default or Google voices
+          selectedVoice = voices.find(voice => {
+            const name = voice.name.toLowerCase();
+            const lang = voice.lang.toLowerCase();
+            return (lang.includes('en-us') || lang.includes('en-gb')) && 
+                   (name.includes('google') || voice.default);
+          });
+        } else {
+          // For desktop: try to find male voice
+          selectedVoice = voices.find(voice => {
+            const name = voice.name.toLowerCase();
+            const lang = voice.lang.toLowerCase();
+            return (name.includes('male') || 
+                    name.includes('david') || 
+                    name.includes('mark') || 
+                    name.includes('alex')) && 
+                  (lang.includes('en') || lang.includes('id'));
+          });
+        }
+        
+        // Fallback to any English voice
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => {
+            const lang = voice.lang.toLowerCase();
+            return lang.includes('en-us') || lang.includes('en-gb');
+          });
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        speechSynthesis.speak(utterance);
+      };
+      
+      setupVoice();
+    }, 50);
   };
 
   // Refs
@@ -729,7 +783,7 @@ const SquatChallengeApp = ({ onBack }) => {
     initializePoseLandmarker();
   }, []);
 
-  // Start webcam - FIXED: Mobile optimized constraints
+  // Start webcam - FIXED: Mobile optimized constraints with aspect ratio fix
   const startWebcam = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -794,9 +848,31 @@ const SquatChallengeApp = ({ onBack }) => {
       }
     }
 
-    // FIXED: Canvas sizing to match video dimensions exactly
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // FIXED: Canvas sizing to prevent overflow on mobile
+    const containerElement = canvas.parentElement;
+    const containerRect = containerElement.getBoundingClientRect();
+    
+    // Calculate scaling to fit within container while maintaining aspect ratio
+    const videoAspectRatio = video.videoWidth / video.videoHeight;
+    const containerAspectRatio = containerRect.width / containerRect.height;
+    
+    let canvasWidth, canvasHeight;
+    
+    if (videoAspectRatio > containerAspectRatio) {
+      // Video is wider than container
+      canvasWidth = containerRect.width;
+      canvasHeight = containerRect.width / videoAspectRatio;
+    } else {
+      // Video is taller than container
+      canvasHeight = containerRect.height;
+      canvasWidth = containerRect.height * videoAspectRatio;
+    }
+    
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+    
     const canvasCtx = canvas.getContext('2d');
     
     try {
@@ -814,7 +890,7 @@ const SquatChallengeApp = ({ onBack }) => {
           drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: '#FFFFFF', lineWidth: 2 });
           drawingUtils.drawLandmarks(landmarks, { color: '#FFFFFF', radius: 4 });
           
-          // Debug info drawing (keeping existing debug code)
+          // Debug info drawing (keeping existing debug code but scaled for mobile)
           const leftHip = landmarks[23];
           const leftKnee = landmarks[25];
           const leftAnkle = landmarks[27];
@@ -830,20 +906,32 @@ const SquatChallengeApp = ({ onBack }) => {
             const standingAngle = squatCounterRef.current.standingKneeAngle || 0;
             const kneeBend = standingAngle - avgKneeAngle;
             
-            // FIXED: Scale debug text for mobile
+            // FIXED: Scale debug text for mobile - smaller font and better positioning
+            const fontSize = Math.max(8, canvas.width * 0.025); // Responsive font size
             canvasCtx.fillStyle = '#FFFFFF';
-            canvasCtx.font = '10px Arial';
-            canvasCtx.fillText(`L Knee: ${leftKneeAngle.toFixed(1)}°`, 10, 25);
-            canvasCtx.fillText(`R Knee: ${rightKneeAngle.toFixed(1)}°`, 10, 40);
-            canvasCtx.fillText(`Avg: ${avgKneeAngle.toFixed(1)}°`, 10, 55);
-            canvasCtx.fillText(`Difference: ${kneeDifference.toFixed(1)}°`, 10, 70);
-            canvasCtx.fillText(`Standing: ${standingAngle.toFixed(1)}°`, 10, 85);
-            canvasCtx.fillText(`Knee Bend: ${kneeBend.toFixed(1)}°`, 10, 100);
-            canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, 10, 115);
+            canvasCtx.font = `${fontSize}px Arial`;
+            
+            const textX = 10;
+            const lineHeight = fontSize + 2;
+            let currentY = 20;
+            
+            canvasCtx.fillText(`L Knee: ${leftKneeAngle.toFixed(1)}°`, textX, currentY);
+            currentY += lineHeight;
+            canvasCtx.fillText(`R Knee: ${rightKneeAngle.toFixed(1)}°`, textX, currentY);
+            currentY += lineHeight;
+            canvasCtx.fillText(`Avg: ${avgKneeAngle.toFixed(1)}°`, textX, currentY);
+            currentY += lineHeight;
+            canvasCtx.fillText(`Difference: ${kneeDifference.toFixed(1)}°`, textX, currentY);
+            currentY += lineHeight;
+            canvasCtx.fillText(`Standing: ${standingAngle.toFixed(1)}°`, textX, currentY);
+            currentY += lineHeight;
+            canvasCtx.fillText(`Knee Bend: ${kneeBend.toFixed(1)}°`, textX, currentY);
+            currentY += lineHeight;
+            canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, textX, currentY);
             
             // FIXED: Draw angle indicators with proper scaling
             canvasCtx.fillStyle = '#FF0000';
-            canvasCtx.font = '8px Arial';
+            canvasCtx.font = `${fontSize - 2}px Arial`;
             
             const leftKneeX = leftKnee.x * canvas.width;
             const leftKneeY = leftKnee.y * canvas.height;
@@ -853,27 +941,32 @@ const SquatChallengeApp = ({ onBack }) => {
             const rightKneeY = rightKnee.y * canvas.height;
             canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 30, rightKneeY);
             
-            // Validation indicators
+            // Validation indicators with responsive positioning
+            currentY += lineHeight;
             canvasCtx.fillStyle = kneeDifference <= 25 ? '#FFFFFF' : '#FF0000';
-            canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, 10, 135);
+            canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, textX, currentY);
+            currentY += lineHeight;
             
             canvasCtx.fillStyle = avgKneeAngle <= 135 ? '#FFFFFF' : '#FFFF00';
-            canvasCtx.fillText(`Down: ≤135° (${avgKneeAngle <= 135 ? 'OK' : 'NO'})`, 10, 150);
+            canvasCtx.fillText(`Down: ≤135° (${avgKneeAngle <= 135 ? 'OK' : 'NO'})`, textX, currentY);
+            currentY += lineHeight;
             
             canvasCtx.fillStyle = avgKneeAngle >= 160 ? '#FFFFFF' : '#FFFF00';
-            canvasCtx.fillText(`Up: ≥160° (${avgKneeAngle >= 160 ? 'OK' : 'NO'})`, 10, 165);
+            canvasCtx.fillText(`Up: ≥160° (${avgKneeAngle >= 160 ? 'OK' : 'NO'})`, textX, currentY);
+            currentY += lineHeight;
             
             if (standingAngle > 0) {
               canvasCtx.fillStyle = kneeBend >= 30 ? '#FFFFFF' : '#FF0000';
-              canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, 10, 180);
+              canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, textX, currentY);
+              currentY += lineHeight;
             }
             
             if (!squatCounterRef.current.isDown) {
               canvasCtx.fillStyle = '#FFFFFF';
-              canvasCtx.fillText(`Need: Both knees squat to ≤135°`, 10, 200);
+              canvasCtx.fillText(`Need: Both knees squat to ≤135°`, textX, currentY);
             } else {
               canvasCtx.fillStyle = '#FFFFFF';
-              canvasCtx.fillText(`Need: Both knees stand to ≥160°`, 10, 200);
+              canvasCtx.fillText(`Need: Both knees stand to ≥160°`, textX, currentY);
             }
           }
           
@@ -1073,10 +1166,10 @@ const SquatChallengeApp = ({ onBack }) => {
 
       {phase === 'setup' && (
         <div className="flex-1 flex flex-col">
-          {/* Video Container - FIXED: Mobile viewport optimized */}
-          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
+          {/* Video Container - FIXED: Mobile viewport optimized with proper aspect ratio */}
+          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden flex items-center justify-center" style={{ 
             aspectRatio: '3/4',
-            maxHeight: 'calc(100vh - 200px)', // Ensure it fits in viewport
+            maxHeight: 'calc(100vh - 200px)',
           }}>
             <video
               ref={videoRef}
@@ -1087,7 +1180,11 @@ const SquatChallengeApp = ({ onBack }) => {
             />
             <canvas
               ref={canvasRef}
-              className="absolute top-0 left-0 w-full h-full pointer-events-none"
+              className="absolute top-0 left-0 pointer-events-none"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+              }}
             />
           </div>
 
@@ -1145,8 +1242,8 @@ const SquatChallengeApp = ({ onBack }) => {
 
       {(phase === 'hydrate' || phase === 'exercise' || phase === 'recovery' || phase === 'go') && (
         <div className="flex-1 flex flex-col">
-          {/* Video Container - FIXED: Mobile viewport optimized */}
-          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
+          {/* Video Container - FIXED: Mobile viewport optimized with proper aspect ratio */}
+          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden flex items-center justify-center" style={{ 
             aspectRatio: '3/4',
             maxHeight: 'calc(100vh - 180px)', 
           }}>
@@ -1159,7 +1256,11 @@ const SquatChallengeApp = ({ onBack }) => {
             />
             <canvas
               ref={canvasRef}
-              className="absolute top-0 left-0 w-full h-full pointer-events-none"
+              className="absolute top-0 left-0 pointer-events-none"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+              }}
             />
 
             {phase === 'go' && (
@@ -1247,7 +1348,7 @@ const SquatChallengeApp = ({ onBack }) => {
             )}
 
             {phase === 'exercise' && (
-              <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
+              <div className="absolute inset-0 flex flex-col justify-end items-center pb-20"> {/* FIXED: Increased bottom padding from pb-16 to pb-20 */}
                 <div className="text-center relative -ml-3">
                   <div className="flex items-center justify-center gap-1">
                     <div className="flex items-center">
@@ -1279,8 +1380,8 @@ const SquatChallengeApp = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Timer - FIXED: Mobile optimized sizing */}
-          <div className="mb-4 mx-4">
+          {/* Timer - FIXED: Mobile optimized sizing with better spacing */}
+          <div className="mb-6 mx-4"> {/* FIXED: Increased bottom margin from mb-4 to mb-6 */}
             {phase === 'hydrate' && (
               <div className="flex items-center justify-end gap-2">
                 <div className="text-white text-right">
