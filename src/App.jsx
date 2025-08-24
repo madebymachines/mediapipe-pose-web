@@ -62,9 +62,16 @@ const ExerciseMenu = ({ onSelectExercise }) => {
     >
       {/* Header */}
       <div className="w-full p-6 text-center">
-        <h1 className="text-4xl font-bold text-white mb-2">
+        <div className="flex items-center justify-center py-2 relative flex-shrink-0">
+          <img 
+            src="./assets/LOGO2 1.png" 
+            alt="Unlock Your 100 Logo" 
+            className="h-12 object-contain"
+          />
+        </div>
+        <h3 className="text-3xl font-bold text-white mt-4 mb-2">
           💪 Fitness AI
-        </h1>
+        </h3>
         <div className="px-6 py-2 text-center">
           <p className="text-white text-sm opacity-70">
             AI-powered exercise tracking
