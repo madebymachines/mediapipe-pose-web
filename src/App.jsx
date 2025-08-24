@@ -10,16 +10,16 @@ import './index.css'
 // Menu utama dengan 4 kotak exercise
 const ExerciseMenu = ({ onSelectExercise }) => {
   const exercises = [
-    {
-      id: 'pushup',
-      name: 'Push-Up',
-      description: 'Upper body strength',
-      color: 'from-purple-500 to-blue-600',
-      icon: <Activity size={32} />,
-      // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
-      gifUrl: '/assets/push up.gif', // Push-up GIF
-      targetReps: '20 reps'
-    },
+    // {
+    //   id: 'pushup',
+    //   name: 'Push-Up',
+    //   description: 'Upper body strength',
+    //   color: 'from-purple-500 to-blue-600',
+    //   icon: <Activity size={32} />,
+    //   // Placeholder untuk GIF - ganti dengan URL GIF sebenarnya
+    //   gifUrl: '/assets/push up.gif', // Push-up GIF
+    //   targetReps: '20 reps'
+    // },
     // {
     //   id: 'situp',
     //   name: 'Sit-Up',
@@ -54,9 +54,8 @@ const ExerciseMenu = ({ onSelectExercise }) => {
 
   return (
     <div 
-      className="w-full min-h-screen flex flex-col"
+      className="w-full min-h-screen bg-black flex flex-col"
       style={{
-        background: "linear-gradient(180deg, #667eea 0%, #764ba2 100%)",
         maxWidth: 430,
         margin: "0 auto",
       }}
@@ -74,7 +73,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       </div>
 
       {/* Exercise Grid */}
-      <div className="flex-1 px-4 py-2 grid grid-cols-2 gap-4 -mt-5">
+      <div className="flex-1 px-4 py-2 grid grid-cols-1 gap-4 -mt-5">
         {exercises.map((exercise) => (
           <div
             key={exercise.id}
@@ -82,7 +81,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
             className="bg-opacity-20 backdrop-blur-sm rounded-2xl p-4 cursor-pointer transform transition-all duration-200 hover:scale-105 hover:bg-opacity-30 active:scale-95"
           >
             {/* GIF Container */}
-            <div className="w-full h-32 mb-4 rounded-xl overflow-hidden bg-opacity-30 flex items-center justify-center">
+            <div className="w-full h-80 mb-4 rounded-xl overflow-hidden bg-opacity-30 flex items-center justify-center">
               <img 
                 src={exercise.gifUrl}
                 alt={exercise.name}
