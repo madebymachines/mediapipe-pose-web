@@ -583,37 +583,120 @@ const SquatChallengeApp = ({ onBack }) => {
   // FIXED: Audio functions with consistent voice
   const playCountSound = (count) => {
     const numbers = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-                     'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+                    'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
     
     if (count <= 20) {
       const utterance = new SpeechSynthesisUtterance(numbers[count]);
       utterance.rate = 1.2;
       utterance.volume = 0.8;
-      // FIXED: Force consistent voice
+      
+      // PERBAIKAN: Logika pemilihan voice yang lebih robust
       const voices = speechSynthesis.getVoices();
-      const maleVoice = voices.find(voice => 
-        voice.name.toLowerCase().includes('male') || 
-        voice.name.toLowerCase().includes('david') ||
-        voice.name.toLowerCase().includes('mark')
-      );
-      if (maleVoice) {
-        utterance.voice = maleVoice;
+      
+      // Priority 1: Cari voice laki-laki berdasarkan nama yang lebih lengkap
+      let selectedVoice = voices.find(voice => {
+        const name = voice.name.toLowerCase();
+        const lang = voice.lang.toLowerCase();
+        return (name.includes('male') || 
+                name.includes('david') || 
+                name.includes('mark') || 
+                name.includes('alex') ||
+                name.includes('daniel') ||
+                name.includes('fred') ||
+                name.includes('jorge') ||
+                name.includes('thomas')) && 
+              (lang.includes('en') || lang.includes('id'));
+      });
+      
+      // Priority 2: Jika tidak ada, cari berdasarkan bahasa dan gender hint
+      if (!selectedVoice) {
+        selectedVoice = voices.find(voice => {
+          const name = voice.name.toLowerCase();
+          const lang = voice.lang.toLowerCase();
+          return (lang.includes('en-us') || lang.includes('en-gb') || lang.includes('id')) && 
+                !name.includes('female') && 
+                !name.includes('woman') && 
+                !name.includes('siri') &&
+                !name.includes('zira') &&
+                !name.includes('hazel');
+        });
       }
+      
+      // Priority 3: Pilih voice pertama yang bukan explicitly female
+      if (!selectedVoice) {
+        selectedVoice = voices.find(voice => {
+          const name = voice.name.toLowerCase();
+          return !name.includes('female') && 
+                !name.includes('woman') && 
+                !name.includes('siri') &&
+                !name.includes('zira') &&
+                !name.includes('hazel') &&
+                !name.includes('cortana');
+        });
+      }
+      
+      // Priority 4: Force pitch untuk membuat suara lebih rendah (masculine)
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      utterance.pitch = 0.8; // Pitch lebih rendah untuk suara maskulin
+      
+      console.log('Selected voice:', selectedVoice ? selectedVoice.name : 'default', 'for count:', count);
       speechSynthesis.speak(utterance);
+      
     } else if (count <= 99) {
       const utterance = new SpeechSynthesisUtterance(count.toString());
       utterance.rate = 1.2;
       utterance.volume = 0.8;
-      // FIXED: Force consistent voice
+      utterance.pitch = 0.8; // Pitch lebih rendah
+      
+      // Gunakan logika yang sama untuk pemilihan voice
       const voices = speechSynthesis.getVoices();
-      const maleVoice = voices.find(voice => 
-        voice.name.toLowerCase().includes('male') || 
-        voice.name.toLowerCase().includes('david') ||
-        voice.name.toLowerCase().includes('mark')
-      );
-      if (maleVoice) {
-        utterance.voice = maleVoice;
+      
+      let selectedVoice = voices.find(voice => {
+        const name = voice.name.toLowerCase();
+        const lang = voice.lang.toLowerCase();
+        return (name.includes('male') || 
+                name.includes('david') || 
+                name.includes('mark') || 
+                name.includes('alex') ||
+                name.includes('daniel') ||
+                name.includes('fred') ||
+                name.includes('jorge') ||
+                name.includes('thomas')) && 
+              (lang.includes('en') || lang.includes('id'));
+      });
+      
+      if (!selectedVoice) {
+        selectedVoice = voices.find(voice => {
+          const name = voice.name.toLowerCase();
+          const lang = voice.lang.toLowerCase();
+          return (lang.includes('en-us') || lang.includes('en-gb') || lang.includes('id')) && 
+                !name.includes('female') && 
+                !name.includes('woman') && 
+                !name.includes('siri') &&
+                !name.includes('zira') &&
+                !name.includes('hazel');
+        });
       }
+      
+      if (!selectedVoice) {
+        selectedVoice = voices.find(voice => {
+          const name = voice.name.toLowerCase();
+          return !name.includes('female') && 
+                !name.includes('woman') && 
+                !name.includes('siri') &&
+                !name.includes('zira') &&
+                !name.includes('hazel') &&
+                !name.includes('cortana');
+        });
+      }
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      
+      console.log('Selected voice:', selectedVoice ? selectedVoice.name : 'default', 'for count:', count);
       speechSynthesis.speak(utterance);
     }
   };
