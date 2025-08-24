@@ -61,17 +61,14 @@ class SquatCounter {
     this.count = 0;
     this.isDown = false;
     this.stateFrames = 0;
-    this.minFrames = 2; // Very responsive - only 2 frames
+    this.minFrames = 2;
     
-    // Lenient but balanced thresholds
-    this.downKneeAngleThreshold = 135; // Must bend knees significantly
-    this.upKneeAngleThreshold = 160; // Standing position
+    this.downKneeAngleThreshold = 135;
+    this.upKneeAngleThreshold = 160;
     
-    // Validation thresholds
-    this.maxKneeAngleDifference = 25; // Both knees must bend similarly
-    this.minKneeBend = 30; // Minimum bend from standing (from ~170° to ~140°)
+    this.maxKneeAngleDifference = 25;
+    this.minKneeBend = 30;
     
-    // Track standing position
     this.standingKneeAngle = null;
   }
 
@@ -85,21 +82,18 @@ class SquatCounter {
   }
 
   isValidSquatPosition(leftKneeAngle, rightKneeAngle, avgKneeAngle) {
-    // Check 1: Both knees must bend similarly (not just one leg)
     const kneeDifference = Math.abs(leftKneeAngle - rightKneeAngle);
     if (kneeDifference > this.maxKneeAngleDifference) {
       console.log(`Invalid: Knee difference too large: ${kneeDifference.toFixed(1)}°`);
       return false;
     }
 
-    // Check 2: Must have significant knee bend from standing position
     if (this.standingKneeAngle === null) {
-      // Set standing angle reference when upright
       if (avgKneeAngle >= 165) {
         this.standingKneeAngle = avgKneeAngle;
         console.log(`Standing angle set: ${this.standingKneeAngle.toFixed(1)}°`);
       }
-      return false; // Need to establish standing position first
+      return false;
     }
 
     const kneeBend = this.standingKneeAngle - avgKneeAngle;
@@ -127,7 +121,6 @@ class SquatCounter {
       return { count: this.count, alert: "Key landmarks missing" };
     }
 
-    // Very lenient visibility check
     const minVisibility = 0.2;
     if (leftHip.visibility < minVisibility || leftKnee.visibility < minVisibility || 
         leftAnkle.visibility < minVisibility || rightHip.visibility < minVisibility || 
@@ -142,14 +135,11 @@ class SquatCounter {
 
     console.log(`L: ${leftKneeAngle.toFixed(1)}° R: ${rightKneeAngle.toFixed(1)}° Avg: ${avgKneeAngle.toFixed(1)}° Diff: ${kneeDifference.toFixed(1)}° IsDown: ${this.isDown}`);
 
-    // Update standing angle when clearly upright
     if (avgKneeAngle >= 165 && kneeDifference < 15) {
       this.standingKneeAngle = avgKneeAngle;
     }
 
-    // Simple logic: Based on knee angle with validation
     if (!this.isDown && avgKneeAngle <= this.downKneeAngleThreshold) {
-      // Validate squat position before counting down
       if (this.isValidSquatPosition(leftKneeAngle, rightKneeAngle, avgKneeAngle)) {
         this.stateFrames++;
         console.log(`Going DOWN - Frames: ${this.stateFrames}/${this.minFrames}`);
@@ -160,11 +150,10 @@ class SquatCounter {
           return { count: this.count, isSquatDown: true };
         }
       } else {
-        this.stateFrames = 0; // Reset if invalid
+        this.stateFrames = 0;
       }
     } 
     else if (this.isDown && avgKneeAngle >= this.upKneeAngleThreshold) {
-      // For going up, just check both knees are reasonably similar
       if (kneeDifference <= this.maxKneeAngleDifference) {
         this.stateFrames++;
         console.log(`Going UP - Frames: ${this.stateFrames}/${this.minFrames}`);
@@ -176,10 +165,9 @@ class SquatCounter {
           return { count: this.count, newCount: true };
         }
       } else {
-        this.stateFrames = 0; // Reset if one leg not following
+        this.stateFrames = 0;
       }
     } else {
-      // Reset frames if not progressing towards target
       this.stateFrames = 0;
     }
 
@@ -194,7 +182,7 @@ class SquatCounter {
   }
 }
 
-// Grid Photo Component - FIXED VERSION
+// Grid Photo Component
 const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, onShare, currentRound, squatCount, progressPercent }) => {
   const canvasRef = useRef(null);
   const [gridImage, setGridImage] = useState(null);
@@ -207,25 +195,20 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
-    // Set canvas size for portrait grid (taller aspect ratio) - DENGAN LOGO
     canvas.width = 400;
-    canvas.height = 780; // Increased to accommodate logo
+    canvas.height = 780;
     
-    // Fill background with black
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Logo area at the top
     const logoHeight = 80;
     const logoY = 10;
     
-    // Grid area starts after logo
     const gridStartY = logoHeight + 20;
     const gridHeight = (canvas.height - gridStartY) * 0.75;
     const photoWidth = canvas.width / 2;
     const photoHeight = gridHeight / 2;
     
-    // Load and draw photos
     const loadImage = (src) => {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -236,244 +219,202 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
     };
     
     try {
-      // Load and draw the logo first
       try {
         const logoImg = await loadImage('./assets/LOGO2 1.png');
         
-        // Calculate logo dimensions to fit within the allocated space
         const logoAspectRatio = logoImg.width / logoImg.height;
-        let logoDisplayWidth = canvas.width * 0.6; // 60% of canvas width
+        let logoDisplayWidth = canvas.width * 0.6;
         let logoDisplayHeight = logoDisplayWidth / logoAspectRatio;
         
-        // If height is too large, scale down
-        if (logoDisplayHeight > logoHeight - 20) { // 20px margin
+        if (logoDisplayHeight > logoHeight - 20) {
           logoDisplayHeight = logoHeight - 20;
           logoDisplayWidth = logoDisplayHeight * logoAspectRatio;
         }
         
-        // Center the logo horizontally
         const logoX = (canvas.width - logoDisplayWidth) / 2;
         const logoYPos = logoY + (logoHeight - logoDisplayHeight) / 2;
         
-        // Draw the logo
         ctx.drawImage(logoImg, logoX, logoYPos, logoDisplayWidth, logoDisplayHeight);
       } catch (logoError) {
         console.error('Error loading logo:', logoError);
-        // If logo fails to load, draw fallback text
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('UNLOCK YOUR 100', canvas.width / 2, logoY + logoHeight / 2);
       }
 
-      // Draw photos in grid with overlays (adjusted Y positions)
       for (let i = 0; i < 4; i++) {
         if (photos[i]) {
           const img = await loadImage(photos[i]);
           const x = (i % 2) * photoWidth;
-          const y = gridStartY + Math.floor(i / 2) * photoHeight; // Adjusted Y position
+          const y = gridStartY + Math.floor(i / 2) * photoHeight;
           
-          // Draw photo filling the entire cell
           ctx.drawImage(img, x, y, photoWidth, photoHeight);
           
-          // Add overlay based on photo position
           if (i === 0) {
-            // Foto pertama - overlay dengan banner yang tidak mentok tepi
-            const bannerWidth = photoWidth * 0.85; // 85% dari lebar foto
-            const bannerX = x + (photoWidth - bannerWidth) / 2; // Center the banner
-            const bannerHeight = 35;
-            const bannerY = y + photoHeight * 0.55;
-            
-            // Red banner dengan lebar terbatas dan rounded
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 8);
-            ctx.fill();
-            
-            // Text "HYDRATE AND ENERGIZE"
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('HYDRATE AND ENERGIZE', x + photoWidth/2, bannerY + 20);
-            
-            // Gap antara banner (5px)
-            const gap = 5;
-            const blackBannerY = bannerY + bannerHeight + gap;
-            const blackBannerHeight = 25;
-            const blackBannerWidth = photoWidth * 0.75; // Sedikit lebih kecil
-            const blackBannerX = x + (photoWidth - blackBannerWidth) / 2;
-            
-            // Black banner dengan lebar terbatas dan rounded
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.beginPath();
-            ctx.roundRect(blackBannerX, blackBannerY, blackBannerWidth, blackBannerHeight, 8);
-            ctx.fill();
-            
-            // Text "BEFORE UNLOCK YOUR 100"
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 9px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('BEFORE UNLOCK YOUR 100', x + photoWidth/2, blackBannerY + 15);
-          } 
-          else if (i === 1) {
-            // Foto kedua (atas kanan) - HANYA ROUND 1 + count + REP - POSISI DIPERBAIKI
-            const counterAreaY = y + photoHeight * 0.55; // Dipindah lebih ke atas dari 0.65 ke 0.55
-            const counterAreaHeight = photoHeight * 0.40; // Diperbesar area untuk memberi ruang lebih
-            
-            // Get actual count
-            const actualCount = round1Count;
-            
-            // Layout horizontal yang compact
-            const centerY = counterAreaY + counterAreaHeight/2;
-            
-            // "ROUND 1" text (rotated) - di kiri, posisi lebih ke atas
-            ctx.save();
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.translate(x + 45, centerY - 20); // Dipindah lebih ke atas
-            ctx.rotate(-Math.PI / 2);
-            ctx.fillText('ROUND 1', 0, 0);
-            ctx.restore();
-            
-            // Large squat count (center)
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 50px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8); // Dipindah lebih ke atas
-            
-            // "REP" text - di kanan
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15); // Dipindah lebih ke atas
-          }
-          else if (i === 2) {
-            // Foto ketiga (bawah kiri) - HANYA RECOVERY & REPEAT STRONGER
             const bannerWidth = photoWidth * 0.85;
             const bannerX = x + (photoWidth - bannerWidth) / 2;
             const bannerHeight = 35;
             const bannerY = y + photoHeight * 0.55;
             
-            // Red banner dengan lebar terbatas dan rounded
             ctx.fillStyle = '#FF0000';
             ctx.beginPath();
             ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 8);
             ctx.fill();
             
-            // Text "RECOVER & REPEAT STRONGER"
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 10px Arial';
+            ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('RECOVER & REPEAT STRONGER', x + photoWidth/2, bannerY + 20);
+            ctx.fillText('HYDRATE AND ENERGIZE', x + photoWidth/2, bannerY + 20);
             
-            // Gap antara banner
             const gap = 5;
             const blackBannerY = bannerY + bannerHeight + gap;
             const blackBannerHeight = 25;
             const blackBannerWidth = photoWidth * 0.75;
             const blackBannerX = x + (photoWidth - blackBannerWidth) / 2;
             
-            // Black banner dengan lebar terbatas dan rounded
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.beginPath();
             ctx.roundRect(blackBannerX, blackBannerY, blackBannerWidth, blackBannerHeight, 8);
             ctx.fill();
             
-            // Text "IT'S TIME TO"
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 9px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('BEFORE UNLOCK YOUR 100', x + photoWidth/2, blackBannerY + 15);
+          } 
+          else if (i === 1) {
+            const counterAreaY = y + photoHeight * 0.55;
+            const counterAreaHeight = photoHeight * 0.40;
+            
+            const actualCount = round1Count;
+            
+            const centerY = counterAreaY + counterAreaHeight/2;
+            
+            ctx.save();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.translate(x + 45, centerY - 20);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('ROUND 1', 0, 0);
+            ctx.restore();
+            
+            ctx.fillStyle = '#FF0000';
+            ctx.font = 'bold 50px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8);
+            
+            ctx.fillStyle = '#FF0000';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15);
+          }
+          else if (i === 2) {
+            const bannerWidth = photoWidth * 0.85;
+            const bannerX = x + (photoWidth - bannerWidth) / 2;
+            const bannerHeight = 35;
+            const bannerY = y + photoHeight * 0.55;
+            
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 8);
+            ctx.fill();
+            
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RECOVER & REPEAT STRONGER', x + photoWidth/2, bannerY + 20);
+            
+            const gap = 5;
+            const blackBannerY = bannerY + bannerHeight + gap;
+            const blackBannerHeight = 25;
+            const blackBannerWidth = photoWidth * 0.75;
+            const blackBannerX = x + (photoWidth - blackBannerWidth) / 2;
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.beginPath();
+            ctx.roundRect(blackBannerX, blackBannerY, blackBannerWidth, blackBannerHeight, 8);
+            ctx.fill();
+            
             ctx.fillStyle = '#FFFFFF';
             ctx.font = 'bold 9px Arial';
             ctx.textAlign = 'center';
             ctx.fillText("IT'S TIME TO", x + photoWidth/2, blackBannerY + 15);
           }
           else if (i === 3) {
-            // Foto keempat (bawah kanan) - ROUND 2 + count + REP - POSISI DIPERBAIKI
-            const counterAreaY = y + photoHeight * 0.55; // Dipindah lebih ke atas dari 0.65 ke 0.55
-            const counterAreaHeight = photoHeight * 0.40; // Diperbesar area untuk memberi ruang lebih
+            const counterAreaY = y + photoHeight * 0.55;
+            const counterAreaHeight = photoHeight * 0.40;
             
-            // Get actual count
             const actualCount = round2Count;
             
-            // Layout horizontal yang compact
             const centerY = counterAreaY + counterAreaHeight/2;
             
-            // "ROUND 2" text (rotated) - di kiri, posisi lebih ke atas
             ctx.save();
             ctx.fillStyle = '#FFFFFF';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.translate(x + 45, centerY - 20); // Dipindah lebih ke atas
+            ctx.translate(x + 45, centerY - 20);
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('ROUND 2', 0, 0);
             ctx.restore();
             
-            // Large squat count (center)
             ctx.fillStyle = '#FF0000';
             ctx.font = 'bold 50px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8); // Dipindah lebih ke atas
+            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8);
             
-            // "REP" text - di kanan
             ctx.fillStyle = '#FF0000';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'left';
-            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15); // Dipindah lebih ke atas
+            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15);
           }
         }
       }
       
-      // Bottom stats section (bottom 25%) - exactly like the reference image, seamlessly connected
       const statsStartY = gridStartY + gridHeight;
       const statsHeight = canvas.height - statsStartY;
       
-      // Stats background (seamless with grid - no border)
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, statsStartY, canvas.width, statsHeight);
       
-      // Center everything horizontally and vertically
       const statsCenterX = canvas.width / 2;
       const statsCenterY = statsStartY + statsHeight / 2;
       
-      // Large red squat count
       ctx.fillStyle = '#ff0000';
       ctx.font = 'bold 100px Arial';
       ctx.textAlign = 'right';
       const countText = totalSquats.toString();
       ctx.fillText(countText, statsCenterX - 80, statsCenterY);
 
-      // "SQUATS" text dengan rotasi -90 derajat - posisi diperbaiki dengan jarak yang cukup dari grid
       ctx.save();
       ctx.fillStyle = '#ff0000';
       ctx.font = 'bold 15px Arial';
       ctx.textAlign = 'left';
-      ctx.translate(statsCenterX - 60, statsCenterY + 2); // Posisi dipindah lebih jauh dari grid dan lebih ke tengah
+      ctx.translate(statsCenterX - 60, statsCenterY + 2);
       ctx.rotate(-Math.PI / 2);
       ctx.fillText('SQUATS', 0, 0);
       ctx.restore();
 
-      // "/" symbol - dengan jarak yang lebih proporsional
       ctx.fillStyle = '#636363';
       ctx.font = 'bold 80px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('/', statsCenterX - 10, statsCenterY);
 
-      // "100" text
       ctx.fillStyle = '#636363';
       ctx.font = 'bold 100px Arial';
       ctx.textAlign = 'left';
       ctx.fillText('100', statsCenterX + 20, statsCenterY);
 
-      // "SECONDS" text dengan rotasi -90 derajat - posisi diperbaiki di samping kanan angka 100
       ctx.save();
       ctx.fillStyle = '#636363';
       ctx.font = 'bold 15px Arial';
       ctx.textAlign = 'left';
-      ctx.translate(statsCenterX + 200, statsCenterY + 2); // Posisi dipindah ke kanan angka 100 dan lebih ke tengah
+      ctx.translate(statsCenterX + 200, statsCenterY + 2);
       ctx.rotate(-Math.PI / 2);
       ctx.fillText('SECONDS', 0, 0);
       ctx.restore();
       
-      // Generate final image
       const dataURL = canvas.toDataURL('image/png');
       setGridImage(dataURL);
       
@@ -485,24 +426,19 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
   const handleShare = async () => {
     if (gridImage) {
       try {
-        // Convert data URL to blob
         const response = await fetch(gridImage);
         const blob = await response.blob();
         
-        // Generate random filename
         const fileName = Math.random().toString(36).substring(2) + ".png";
         const filesArray = [new File([blob], fileName, { type: 'image/png' })];
         
-        // Check if Web Share API is available and can share files
         if (navigator.canShare && navigator.canShare({ files: filesArray })) {
           await navigator.share({
             files: filesArray,
-            // Hapus title dan text untuk kompatibilitas maksimal
           });
           console.log("Image shared successfully");
         } else {
           console.log("Web Share API not supported, falling back to download");
-          // Fallback: download the image
           const link = document.createElement('a');
           link.href = gridImage;
           link.download = fileName;
@@ -511,7 +447,6 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error('Error sharing the image:', error);
-          // Fallback: download the image
           const fileName = Math.random().toString(36).substring(2) + ".png";
           const link = document.createElement('a');
           link.href = gridImage;
@@ -524,7 +459,6 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
 
   return (
     <div className="w-full min-h-screen bg-black text-white flex flex-col" style={{ maxWidth: 430, margin: "0 auto" }}>
-      {/* Header - TANPA LOGO untuk menghindari double logo */}
       <div className="flex items-center justify-between py-4 px-4">
         <button onClick={onBack} className="text-white">
           <ArrowLeft size={24} />
@@ -533,7 +467,6 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
         <div className="w-6"></div>
       </div>
 
-      {/* Grid Display */}
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="mb-6">
           <canvas 
@@ -550,7 +483,6 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
           )}
         </div>
 
-        {/* Share Button - Fixed center alignment */}
         <button
           onClick={handleShare}
           className="bg-[#FF0000] w-full text-white py-3 px-8 rounded-lg font-bold hover:bg-red-600 transition-colors flex items-center justify-center"
@@ -562,10 +494,8 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
   );
 };
 
-
 const SquatChallengeApp = ({ onBack }) => {
-  // States
-  const [phase, setPhase] = useState('setup'); // 'setup', 'hydrate', 'exercise', 'recovery', 'go', 'completed', 'grid'
+  const [phase, setPhase] = useState('setup');
   const [currentRound, setCurrentRound] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState(10);
   const [squatCount, setSquatCount] = useState(0);
@@ -580,16 +510,14 @@ const SquatChallengeApp = ({ onBack }) => {
   const [hasSpokenRecovery, setHasSpokenRecovery] = useState(false);
   const [hasSpokenCongratulations, setHasSpokenCongratulations] = useState(false);
 
-  // FIXED: Audio functions with mobile-friendly approach
+  // Audio functions
   const playCountSound = (count) => {
-    // Check if we're on mobile
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     const numbers = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
                     'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
     
     if (count <= 20) {
-      // Cancel any ongoing speech
       speechSynthesis.cancel();
       
       setTimeout(() => {
@@ -597,12 +525,10 @@ const SquatChallengeApp = ({ onBack }) => {
         utterance.rate = 1.2;
         utterance.volume = 0.8;
         
-        // FIXED: Mobile-optimized voice selection
         const setupVoice = () => {
           const voices = speechSynthesis.getVoices();
           
           if (voices.length === 0) {
-            // Try again later if voices aren't loaded yet
             setTimeout(setupVoice, 100);
             return;
           }
@@ -610,7 +536,6 @@ const SquatChallengeApp = ({ onBack }) => {
           let selectedVoice = null;
           
           if (isMobile) {
-            // For mobile: prefer system default or Google voices
             selectedVoice = voices.find(voice => {
               const name = voice.name.toLowerCase();
               const lang = voice.lang.toLowerCase();
@@ -618,7 +543,6 @@ const SquatChallengeApp = ({ onBack }) => {
                      (name.includes('google') || voice.default);
             });
           } else {
-            // For desktop: try to find male voice
             selectedVoice = voices.find(voice => {
               const name = voice.name.toLowerCase();
               const lang = voice.lang.toLowerCase();
@@ -630,7 +554,6 @@ const SquatChallengeApp = ({ onBack }) => {
             });
           }
           
-          // Fallback to any English voice
           if (!selectedVoice) {
             selectedVoice = voices.find(voice => {
               const lang = voice.lang.toLowerCase();
@@ -647,15 +570,13 @@ const SquatChallengeApp = ({ onBack }) => {
         };
         
         setupVoice();
-      }, 50); // Small delay to ensure previous speech is cancelled
+      }, 50);
     }
   };
 
   const playAnnouncement = (text) => {
-    // Check if we're on mobile
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    // Cancel any ongoing speech
     speechSynthesis.cancel();
     
     setTimeout(() => {
@@ -674,7 +595,6 @@ const SquatChallengeApp = ({ onBack }) => {
         let selectedVoice = null;
         
         if (isMobile) {
-          // For mobile: prefer system default or Google voices
           selectedVoice = voices.find(voice => {
             const name = voice.name.toLowerCase();
             const lang = voice.lang.toLowerCase();
@@ -682,7 +602,6 @@ const SquatChallengeApp = ({ onBack }) => {
                    (name.includes('google') || voice.default);
           });
         } else {
-          // For desktop: try to find male voice
           selectedVoice = voices.find(voice => {
             const name = voice.name.toLowerCase();
             const lang = voice.lang.toLowerCase();
@@ -694,7 +613,6 @@ const SquatChallengeApp = ({ onBack }) => {
           });
         }
         
-        // Fallback to any English voice
         if (!selectedVoice) {
           selectedVoice = voices.find(voice => {
             const lang = voice.lang.toLowerCase();
@@ -729,23 +647,18 @@ const SquatChallengeApp = ({ onBack }) => {
     
     if (!canvas || !video) return;
     
-    // Create a temporary canvas to combine video and overlay
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
     
     tempCanvas.width = video.videoWidth;
     tempCanvas.height = video.videoHeight;
     
-    // Draw video frame
     tempCtx.drawImage(video, 0, 0);
     
-    // Draw the pose overlay from the main canvas
     tempCtx.drawImage(canvas, 0, 0);
     
-    // Convert to data URL
     const dataURL = tempCanvas.toDataURL('image/png');
     
-    // Store in memory (not localStorage due to size limits)
     setScreenshots(prev => ({
       ...prev,
       [photoType]: dataURL
@@ -783,7 +696,7 @@ const SquatChallengeApp = ({ onBack }) => {
     initializePoseLandmarker();
   }, []);
 
-  // Start webcam - FIXED: Mobile optimized constraints with aspect ratio fix
+  // Start webcam
   const startWebcam = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -824,7 +737,7 @@ const SquatChallengeApp = ({ onBack }) => {
     }
   }, [webcamRunning, startWebcam]);
 
-  // FPS monitoring and pose detection
+  // FIXED: Pose detection with proper canvas sizing and positioning
   const detectPose = useCallback(async () => {
     if (!videoRef.current || !webcamRunning || !poseLandmarkerRef.current) {
       animationFrameRef.current = requestAnimationFrame(detectPose);
@@ -848,30 +761,15 @@ const SquatChallengeApp = ({ onBack }) => {
       }
     }
 
-    // FIXED: Canvas sizing to prevent overflow on mobile
-    const containerElement = canvas.parentElement;
-    const containerRect = containerElement.getBoundingClientRect();
-    
-    // Calculate scaling to fit within container while maintaining aspect ratio
-    const videoAspectRatio = video.videoWidth / video.videoHeight;
-    const containerAspectRatio = containerRect.width / containerRect.height;
-    
-    let canvasWidth, canvasHeight;
-    
-    if (videoAspectRatio > containerAspectRatio) {
-      // Video is wider than container
-      canvasWidth = containerRect.width;
-      canvasHeight = containerRect.width / videoAspectRatio;
-    } else {
-      // Video is taller than container
-      canvasHeight = containerRect.height;
-      canvasWidth = containerRect.height * videoAspectRatio;
-    }
-    
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
+    // FIXED: Proper canvas sizing to match video exactly
+    const videoRect = video.getBoundingClientRect();
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.style.width = `${videoRect.width}px`;
+    canvas.style.height = `${videoRect.height}px`;
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
     
     const canvasCtx = canvas.getContext('2d');
     
@@ -885,12 +783,12 @@ const SquatChallengeApp = ({ onBack }) => {
         const landmarks = results.landmarks[0];
         
         if (phase === 'exercise') {
-          // FIXED: Draw skeleton with proper scaling
+          // FIXED: Draw skeleton with proper scaling to video dimensions
           const drawingUtils = new DrawingUtils(canvasCtx);
           drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: '#FFFFFF', lineWidth: 2 });
           drawingUtils.drawLandmarks(landmarks, { color: '#FFFFFF', radius: 4 });
           
-          // Debug info drawing (keeping existing debug code but scaled for mobile)
+          // FIXED: Debug info positioning - moved to bottom area to avoid overlap
           const leftHip = landmarks[23];
           const leftKnee = landmarks[25];
           const leftAnkle = landmarks[27];
@@ -906,14 +804,18 @@ const SquatChallengeApp = ({ onBack }) => {
             const standingAngle = squatCounterRef.current.standingKneeAngle || 0;
             const kneeBend = standingAngle - avgKneeAngle;
             
-            // FIXED: Scale debug text for mobile - smaller font and better positioning
-            const fontSize = Math.max(8, canvas.width * 0.025); // Responsive font size
+            // FIXED: Position debug text at bottom of canvas, smaller font
+            const fontSize = Math.max(10, canvas.width * 0.02); // Smaller responsive font
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            const debugBoxHeight = fontSize * 10; // Enough space for all debug lines
+            canvasCtx.fillRect(0, canvas.height - debugBoxHeight, canvas.width, debugBoxHeight);
+            
             canvasCtx.fillStyle = '#FFFFFF';
             canvasCtx.font = `${fontSize}px Arial`;
             
             const textX = 10;
             const lineHeight = fontSize + 2;
-            let currentY = 20;
+            let currentY = canvas.height - debugBoxHeight + lineHeight; // Start from bottom area
             
             canvasCtx.fillText(`L Knee: ${leftKneeAngle.toFixed(1)}°`, textX, currentY);
             currentY += lineHeight;
@@ -929,9 +831,9 @@ const SquatChallengeApp = ({ onBack }) => {
             currentY += lineHeight;
             canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, textX, currentY);
             
-            // FIXED: Draw angle indicators with proper scaling
+            // FIXED: Draw angle indicators properly scaled to video
             canvasCtx.fillStyle = '#FF0000';
-            canvasCtx.font = `${fontSize - 2}px Arial`;
+            canvasCtx.font = `${fontSize + 2}px Arial`;
             
             const leftKneeX = leftKnee.x * canvas.width;
             const leftKneeY = leftKnee.y * canvas.height;
@@ -939,34 +841,17 @@ const SquatChallengeApp = ({ onBack }) => {
             
             const rightKneeX = rightKnee.x * canvas.width;
             const rightKneeY = rightKnee.y * canvas.height;
-            canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 30, rightKneeY);
+            canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 50, rightKneeY);
             
-            // Validation indicators with responsive positioning
+            // Validation indicators in the debug area
             currentY += lineHeight;
-            canvasCtx.fillStyle = kneeDifference <= 25 ? '#FFFFFF' : '#FF0000';
+            canvasCtx.fillStyle = kneeDifference <= 25 ? '#00FF00' : '#FF0000';
             canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, textX, currentY);
             currentY += lineHeight;
             
-            canvasCtx.fillStyle = avgKneeAngle <= 135 ? '#FFFFFF' : '#FFFF00';
-            canvasCtx.fillText(`Down: ≤135° (${avgKneeAngle <= 135 ? 'OK' : 'NO'})`, textX, currentY);
-            currentY += lineHeight;
-            
-            canvasCtx.fillStyle = avgKneeAngle >= 160 ? '#FFFFFF' : '#FFFF00';
-            canvasCtx.fillText(`Up: ≥160° (${avgKneeAngle >= 160 ? 'OK' : 'NO'})`, textX, currentY);
-            currentY += lineHeight;
-            
             if (standingAngle > 0) {
-              canvasCtx.fillStyle = kneeBend >= 30 ? '#FFFFFF' : '#FF0000';
+              canvasCtx.fillStyle = kneeBend >= 30 ? '#00FF00' : '#FF0000';
               canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, textX, currentY);
-              currentY += lineHeight;
-            }
-            
-            if (!squatCounterRef.current.isDown) {
-              canvasCtx.fillStyle = '#FFFFFF';
-              canvasCtx.fillText(`Need: Both knees squat to ≤135°`, textX, currentY);
-            } else {
-              canvasCtx.fillStyle = '#FFFFFF';
-              canvasCtx.fillText(`Need: Both knees stand to ≥160°`, textX, currentY);
             }
           }
           
@@ -1013,7 +898,6 @@ const SquatChallengeApp = ({ onBack }) => {
     if (phase === 'hydrate' || phase === 'exercise' || phase === 'recovery') {
       timerRef.current = setInterval(() => {
         setTimeRemaining(prev => {
-          // Audio announcements at specific times
           if ((phase === 'hydrate' || phase === 'recovery') && prev === 5) {
             const message = phase === 'hydrate' ? 'Your First Round Begin in' : 'Your Second Round Begin in';
             playAnnouncement(message);
@@ -1047,10 +931,8 @@ const SquatChallengeApp = ({ onBack }) => {
     }
   }, [phase, timeRemaining, hasSpokenRecovery]);
 
-  // Separate effect for GO announcement to avoid double speak
   useEffect(() => {
     if (phase === 'go') {
-      // Announce GO immediately when GO phase starts
       playAnnouncement('GO!');
     }
   }, [phase]);
@@ -1067,7 +949,6 @@ const SquatChallengeApp = ({ onBack }) => {
   }, [timeRemaining, phase]);
 
   const handlePhaseComplete = () => {
-    // Take screenshot at phase completion
     if (phase === 'hydrate') {
       takeScreenshot('hydrate');
       setProgressPercent(100);
@@ -1089,14 +970,13 @@ const SquatChallengeApp = ({ onBack }) => {
         setTimeRemaining(10);
         setProgressPercent(0);
       } else {
-        // Round 2 completed - FIXED: play congratulations speech only once
         if (!hasSpokenCongratulations) {
           playAnnouncement('Congratulations! You finished your challenge!');
           setHasSpokenCongratulations(true);
         }
         setTimeout(() => {
-          setPhase('grid'); // Go to grid after speech
-        }, 3000); // Wait 3 seconds for speech to complete
+          setPhase('grid');
+        }, 3000);
       }
     } else if (phase === 'recovery') {
       takeScreenshot('recovery');
@@ -1155,7 +1035,7 @@ const SquatChallengeApp = ({ onBack }) => {
       margin: "0 auto",
       minHeight: '100vh',
     }}>
-      {/* Header - FIXED: Reduce height for mobile */}
+      {/* Header */}
       <div className="flex items-center justify-center py-2 relative flex-shrink-0">
         <img 
           src="./assets/LOGO2 1.png" 
@@ -1166,8 +1046,8 @@ const SquatChallengeApp = ({ onBack }) => {
 
       {phase === 'setup' && (
         <div className="flex-1 flex flex-col">
-          {/* Video Container - FIXED: Mobile viewport optimized with proper aspect ratio */}
-          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden flex items-center justify-center" style={{ 
+          {/* FIXED: Video Container with proper relative positioning for canvas overlay */}
+          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
             aspectRatio: '3/4',
             maxHeight: 'calc(100vh - 200px)',
           }}>
@@ -1182,17 +1062,16 @@ const SquatChallengeApp = ({ onBack }) => {
               ref={canvasRef}
               className="absolute top-0 left-0 pointer-events-none"
               style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
               }}
             />
           </div>
 
           {/* Status Checks */}
           <div className="mx-4 mb-4">
-            {/* Camera and FPS Check - Side by Side */}
             <div className="flex items-center justify-between gap-8 mb-4">
-              {/* Camera Check */}
               <div className="flex items-center gap-2">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${webcamRunning ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
                   {webcamRunning ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
@@ -1200,7 +1079,6 @@ const SquatChallengeApp = ({ onBack }) => {
                 <span className={`text-lg font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
               </div>
 
-              {/* FPS Check */}
               <div className="flex items-center gap-2">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isFpsCompatible ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
                   {isFpsCompatible ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
@@ -1209,7 +1087,6 @@ const SquatChallengeApp = ({ onBack }) => {
               </div>
             </div>
             
-            {/* Error Message for FPS */}
             {!isFpsCompatible && (
               <div className="text-white text-sm text-center">
                 Sorry, Your device is not compatible. Please find other device to do the challenge!
@@ -1217,7 +1094,6 @@ const SquatChallengeApp = ({ onBack }) => {
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="mx-4 mb-4 flex gap-4">
             <button
               onClick={onBack}
@@ -1242,8 +1118,8 @@ const SquatChallengeApp = ({ onBack }) => {
 
       {(phase === 'hydrate' || phase === 'exercise' || phase === 'recovery' || phase === 'go') && (
         <div className="flex-1 flex flex-col">
-          {/* Video Container - FIXED: Mobile viewport optimized with proper aspect ratio */}
-          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden flex items-center justify-center" style={{ 
+          {/* FIXED: Video Container with proper relative positioning */}
+          <div className="relative mx-4 mb-4 bg-transparent rounded-lg overflow-hidden" style={{ 
             aspectRatio: '3/4',
             maxHeight: 'calc(100vh - 180px)', 
           }}>
@@ -1258,8 +1134,9 @@ const SquatChallengeApp = ({ onBack }) => {
               ref={canvasRef}
               className="absolute top-0 left-0 pointer-events-none"
               style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
               }}
             />
 
@@ -1269,12 +1146,10 @@ const SquatChallengeApp = ({ onBack }) => {
               </div>
             )}
 
-            {/* Hydrate Phase Overlay - positioned lower */}
+            {/* Phase overlays - positioned properly */}
             {phase === 'hydrate' && (
               <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
-                {/* Main Title with Progress Fill */}
                 <div className="text-center relative">
-                  {/* Animated Bottle Icon - positioned above the box */}
                   <div className="absolute -top-10 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
                        style={{ 
                          transform: `translateX(${progressPercent * 1.8}px)` 
@@ -1309,7 +1184,6 @@ const SquatChallengeApp = ({ onBack }) => {
               </div>
             )}
 
-            {/* Recovery Phase Overlay - positioned lower with bottle animation */}
             {phase === 'recovery' && (
               <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
                 <div className="text-center relative">
@@ -1348,7 +1222,7 @@ const SquatChallengeApp = ({ onBack }) => {
             )}
 
             {phase === 'exercise' && (
-              <div className="absolute inset-0 flex flex-col justify-end items-center pb-20"> {/* FIXED: Increased bottom padding from pb-16 to pb-20 */}
+              <div className="absolute inset-0 flex flex-col justify-end items-center pb-20">
                 <div className="text-center relative -ml-3">
                   <div className="flex items-center justify-center gap-1">
                     <div className="flex items-center">
@@ -1380,8 +1254,8 @@ const SquatChallengeApp = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Timer - FIXED: Mobile optimized sizing with better spacing */}
-          <div className="mb-6 mx-4"> {/* FIXED: Increased bottom margin from mb-4 to mb-6 */}
+          {/* Timer */}
+          <div className="mb-6 mx-4">
             {phase === 'hydrate' && (
               <div className="flex items-center justify-end gap-2">
                 <div className="text-white text-right">
