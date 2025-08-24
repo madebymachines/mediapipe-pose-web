@@ -78,7 +78,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
           <div
             key={exercise.id}
             onClick={() => onSelectExercise(exercise.id)}
-            className="bg-opacity-20 backdrop-blur-sm rounded-2xl p-4 cursor-pointer transform transition-all duration-200 hover:scale-105 hover:bg-opacity-30 active:scale-95"
+            className="bg-opacity-20 rounded-2xl p-4 cursor-pointer transform transition-all duration-200 hover:scale-105 hover:bg-opacity-30 active:scale-95"
           >
             {/* GIF Container */}
             <div className="w-full h-80 mb-4 rounded-xl overflow-hidden bg-opacity-30 flex items-center justify-center">
