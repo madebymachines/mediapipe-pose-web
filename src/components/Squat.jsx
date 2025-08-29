@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, Check, X, Share2, Download } from 'lucide-react';
+import { ArrowLeft, Check, X, Share2, Download, AlertTriangle } from 'lucide-react';
 import {
   PoseLandmarker,
   FilesetResolver,
@@ -52,6 +52,95 @@ class FPSMonitor {
     this.fps = 0;
     this.avgFps = 0;
     this.fpsHistory = [];
+  }
+}
+
+// Position Validator Class
+class PositionValidator {
+  constructor() {
+    this.isPositionValid = false;
+    this.validFrames = 0;
+    this.requiredValidFrames = 15; // Need valid position for 15 consecutive frames
+  }
+
+  validatePosition(landmarks) {
+    if (!landmarks || landmarks.length < 33) {
+      this.validFrames = 0;
+      this.isPositionValid = false;
+      return { isValid: false, message: "No person detected" };
+    }
+
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    const leftKnee = landmarks[25];
+    const rightKnee = landmarks[26];
+    const leftAnkle = landmarks[27];
+    const rightAnkle = landmarks[28];
+
+    // Check if key landmarks are visible
+    const keyLandmarks = [leftShoulder, rightShoulder, leftHip, rightHip, leftKnee, rightKnee, leftAnkle, rightAnkle];
+    const minVisibility = 0.5;
+    
+    for (let landmark of keyLandmarks) {
+      if (!landmark || landmark.visibility < minVisibility) {
+        this.validFrames = 0;
+        this.isPositionValid = false;
+        return { isValid: false, message: "Step back so your whole body is visible" };
+      }
+    }
+
+    // Check if whole body is in frame
+    const minY = Math.min(leftShoulder.y, rightShoulder.y);
+    const maxY = Math.max(leftAnkle.y, rightAnkle.y);
+    const minX = Math.min(leftShoulder.x, rightShoulder.x, leftHip.x, rightHip.x, leftKnee.x, rightKnee.x, leftAnkle.x, rightAnkle.x);
+    const maxX = Math.max(leftShoulder.x, rightShoulder.x, leftHip.x, rightHip.x, leftKnee.x, rightKnee.x, leftAnkle.x, rightAnkle.x);
+
+    // Check if person is too close (body parts cut off)
+    if (minY < 0.05 || maxY > 0.95 || minX < 0.05 || maxX > 0.95) {
+      this.validFrames = 0;
+      this.isPositionValid = false;
+      return { isValid: false, message: "Step back so your whole body is visible" };
+    }
+
+    // Check if person is facing forward
+    const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
+    const hipWidth = Math.abs(leftHip.x - rightHip.x);
+    const minBodyWidth = 0.08;
+    
+    if (shoulderWidth < minBodyWidth || hipWidth < minBodyWidth) {
+      this.validFrames = 0;
+      this.isPositionValid = false;
+      return { isValid: false, message: "Face the camera and get into position" };
+    }
+
+    // Check if person is standing straight
+    const shoulderCenter = (leftShoulder.x + rightShoulder.x) / 2;
+    const hipCenter = (leftHip.x + rightHip.x) / 2;
+    const bodyAlignment = Math.abs(shoulderCenter - hipCenter);
+    const maxBodyMisalignment = 0.08;
+    
+    if (bodyAlignment > maxBodyMisalignment) {
+      this.validFrames = 0;
+      this.isPositionValid = false;
+      return { isValid: false, message: "Stand straight and face the camera" };
+    }
+
+    // Position looks good, increment valid frames
+    this.validFrames++;
+    
+    if (this.validFrames >= this.requiredValidFrames) {
+      this.isPositionValid = true;
+      return { isValid: true, message: "Perfect position! Ready to start!" };
+    } else {
+      return { isValid: false, message: "Hold your position..." };
+    }
+  }
+
+  reset() {
+    this.isPositionValid = false;
+    this.validFrames = 0;
   }
 }
 
@@ -228,6 +317,24 @@ class SquatCounter {
   }
 }
 
+// YouTube Video Component
+const YouTubeVideo = ({ videoId, className }) => {
+  return (
+    <div className={className}>
+      <iframe
+        width="100%"
+        height="100%"
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1`}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        style={{ borderRadius: '8px' }}
+      ></iframe>
+    </div>
+  );
+};
+
 // Grid Photo Component
 const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, onShare, currentRound, squatCount, progressPercent }) => {
   const canvasRef = useRef(null);
@@ -297,124 +404,124 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
           
           ctx.drawImage(img, x, y, photoWidth, photoHeight);
           
-          if (i === 0) {
-            const bannerWidth = photoWidth * 0.85;
-            const bannerX = x + (photoWidth - bannerWidth) / 2;
-            const bannerHeight = 35;
-            const bannerY = y + photoHeight * 0.55;
+          // if (i === 0) {
+          //   const bannerWidth = photoWidth * 0.85;
+          //   const bannerX = x + (photoWidth - bannerWidth) / 2;
+          //   const bannerHeight = 35;
+          //   const bannerY = y + photoHeight * 0.55;
             
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 8);
-            ctx.fill();
+          //   ctx.fillStyle = '#FF0000';
+          //   ctx.beginPath();
+          //   ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 8);
+          //   ctx.fill();
             
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('HYDRATE AND ENERGIZE', x + photoWidth/2, bannerY + 20);
+          //   ctx.fillStyle = '#FFFFFF';
+          //   ctx.font = 'bold 12px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.fillText('HYDRATE AND ENERGIZE', x + photoWidth/2, bannerY + 20);
             
-            const gap = 5;
-            const blackBannerY = bannerY + bannerHeight + gap;
-            const blackBannerHeight = 25;
-            const blackBannerWidth = photoWidth * 0.75;
-            const blackBannerX = x + (photoWidth - blackBannerWidth) / 2;
+          //   const gap = 5;
+          //   const blackBannerY = bannerY + bannerHeight + gap;
+          //   const blackBannerHeight = 25;
+          //   const blackBannerWidth = photoWidth * 0.75;
+          //   const blackBannerX = x + (photoWidth - blackBannerWidth) / 2;
             
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.beginPath();
-            ctx.roundRect(blackBannerX, blackBannerY, blackBannerWidth, blackBannerHeight, 8);
-            ctx.fill();
+          //   ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+          //   ctx.beginPath();
+          //   ctx.roundRect(blackBannerX, blackBannerY, blackBannerWidth, blackBannerHeight, 8);
+          //   ctx.fill();
             
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 9px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('BEFORE UNLOCK YOUR 100', x + photoWidth/2, blackBannerY + 15);
-          } 
-          else if (i === 1) {
-            const counterAreaY = y + photoHeight * 0.55;
-            const counterAreaHeight = photoHeight * 0.40;
+          //   ctx.fillStyle = '#FFFFFF';
+          //   ctx.font = 'bold 9px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.fillText('BEFORE UNLOCK YOUR 100', x + photoWidth/2, blackBannerY + 15);
+          // } 
+          // else if (i === 1) {
+          //   const counterAreaY = y + photoHeight * 0.55;
+          //   const counterAreaHeight = photoHeight * 0.40;
             
-            const actualCount = round1Count;
+          //   const actualCount = round1Count;
             
-            const centerY = counterAreaY + counterAreaHeight/2;
+          //   const centerY = counterAreaY + counterAreaHeight/2;
             
-            ctx.save();
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.translate(x + 45, centerY - 20);
-            ctx.rotate(-Math.PI / 2);
-            ctx.fillText('ROUND 1', 0, 0);
-            ctx.restore();
+          //   ctx.save();
+          //   ctx.fillStyle = '#FFFFFF';
+          //   ctx.font = 'bold 14px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.translate(x + 45, centerY - 20);
+          //   ctx.rotate(-Math.PI / 2);
+          //   ctx.fillText('ROUND 1', 0, 0);
+          //   ctx.restore();
             
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 50px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8);
+          //   ctx.fillStyle = '#FF0000';
+          //   ctx.font = 'bold 50px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8);
             
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15);
-          }
-          else if (i === 2) {
-            const bannerWidth = photoWidth * 0.85;
-            const bannerX = x + (photoWidth - bannerWidth) / 2;
-            const bannerHeight = 35;
-            const bannerY = y + photoHeight * 0.55;
+          //   ctx.fillStyle = '#FF0000';
+          //   ctx.font = 'bold 16px Arial';
+          //   ctx.textAlign = 'left';
+          //   ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15);
+          // }
+          // else if (i === 2) {
+          //   const bannerWidth = photoWidth * 0.85;
+          //   const bannerX = x + (photoWidth - bannerWidth) / 2;
+          //   const bannerHeight = 35;
+          //   const bannerY = y + photoHeight * 0.55;
             
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 8);
-            ctx.fill();
+          //   ctx.fillStyle = '#FF0000';
+          //   ctx.beginPath();
+          //   ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 8);
+          //   ctx.fill();
             
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('RECOVER & REPEAT STRONGER', x + photoWidth/2, bannerY + 20);
+          //   ctx.fillStyle = '#FFFFFF';
+          //   ctx.font = 'bold 10px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.fillText('RECOVER & REPEAT STRONGER', x + photoWidth/2, bannerY + 20);
             
-            const gap = 5;
-            const blackBannerY = bannerY + bannerHeight + gap;
-            const blackBannerHeight = 25;
-            const blackBannerWidth = photoWidth * 0.75;
-            const blackBannerX = x + (photoWidth - blackBannerWidth) / 2;
+          //   const gap = 5;
+          //   const blackBannerY = bannerY + bannerHeight + gap;
+          //   const blackBannerHeight = 25;
+          //   const blackBannerWidth = photoWidth * 0.75;
+          //   const blackBannerX = x + (photoWidth - blackBannerWidth) / 2;
             
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.beginPath();
-            ctx.roundRect(blackBannerX, blackBannerY, blackBannerWidth, blackBannerHeight, 8);
-            ctx.fill();
+          //   ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+          //   ctx.beginPath();
+          //   ctx.roundRect(blackBannerX, blackBannerY, blackBannerWidth, blackBannerHeight, 8);
+          //   ctx.fill();
             
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 9px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText("IT'S TIME TO", x + photoWidth/2, blackBannerY + 15);
-          }
-          else if (i === 3) {
-            const counterAreaY = y + photoHeight * 0.55;
-            const counterAreaHeight = photoHeight * 0.40;
+          //   ctx.fillStyle = '#FFFFFF';
+          //   ctx.font = 'bold 9px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.fillText("IT'S TIME TO", x + photoWidth/2, blackBannerY + 15);
+          // }
+          // else if (i === 3) {
+          //   const counterAreaY = y + photoHeight * 0.55;
+          //   const counterAreaHeight = photoHeight * 0.40;
             
-            const actualCount = round2Count;
+          //   const actualCount = round2Count;
             
-            const centerY = counterAreaY + counterAreaHeight/2;
+          //   const centerY = counterAreaY + counterAreaHeight/2;
             
-            ctx.save();
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.translate(x + 45, centerY - 20);
-            ctx.rotate(-Math.PI / 2);
-            ctx.fillText('ROUND 2', 0, 0);
-            ctx.restore();
+          //   ctx.save();
+          //   ctx.fillStyle = '#FFFFFF';
+          //   ctx.font = 'bold 14px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.translate(x + 45, centerY - 20);
+          //   ctx.rotate(-Math.PI / 2);
+          //   ctx.fillText('ROUND 2', 0, 0);
+          //   ctx.restore();
             
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 50px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8);
+          //   ctx.fillStyle = '#FF0000';
+          //   ctx.font = 'bold 50px Arial';
+          //   ctx.textAlign = 'center';
+          //   ctx.fillText(actualCount.toString(), x + photoWidth/2 - 10, centerY - 8);
             
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15);
-          }
+          //   ctx.fillStyle = '#FF0000';
+          //   ctx.font = 'bold 16px Arial';
+          //   ctx.textAlign = 'left';
+          //   ctx.fillText('REP', x + photoWidth/2 + 25, centerY - 15);
+          // }
         }
       }
       
@@ -442,18 +549,18 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
       ctx.fillText('SQUATS', 0, 0);
       ctx.restore();
 
-      ctx.fillStyle = '#636363';
+      ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 80px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('/', statsCenterX - 10, statsCenterY);
 
-      ctx.fillStyle = '#636363';
+      ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 100px Arial';
       ctx.textAlign = 'left';
       ctx.fillText('100', statsCenterX + 20, statsCenterY);
 
       ctx.save();
-      ctx.fillStyle = '#636363';
+      ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px Arial';
       ctx.textAlign = 'left';
       ctx.translate(statsCenterX + 200, statsCenterY + 2);
@@ -505,16 +612,8 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
 
   return (
     <div className="w-full min-h-screen bg-black text-white flex flex-col" style={{ maxWidth: 430, margin: "0 auto" }}>
-      <div className="flex items-center justify-between py-4 px-4">
-        <button onClick={onBack} className="text-white">
-          <ArrowLeft size={24} />
-        </button>
-        <div className="text-white text-lg font-bold">CHALLENGE COMPLETED</div>
-        <div className="w-6"></div>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="mb-6">
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div>
           <canvas 
             ref={canvasRef} 
             className="max-w-full h-auto border border-gray-600 rounded-lg"
@@ -531,9 +630,9 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
 
         <button
           onClick={handleShare}
-          className="bg-[#FF0000] w-full text-white py-3 px-8 rounded-lg font-bold hover:bg-red-600 transition-colors flex items-center justify-center"
+          className="bg-[#FF0000] -mt-10 w-full text-white py-3 px-8 rounded-[5PX] font-bold hover:bg-[#FF0000] transition-colors flex items-center justify-center"
         >
-          <span className="text-white">SHARE TO SOCIAL MEDIA</span>
+          <span className="text-white">SHARE TO COLLECT POINTS</span>
         </button>
       </div>
     </div>
@@ -555,6 +654,11 @@ const SquatChallengeApp = ({ onBack }) => {
   const [hasSpokenHydrate, setHasSpokenHydrate] = useState(false);
   const [hasSpokenRecovery, setHasSpokenRecovery] = useState(false);
   const [hasSpokenCongratulations, setHasSpokenCongratulations] = useState(false);
+  const [positionValidation, setPositionValidation] = useState({ isValid: false, message: "" });
+  const [isPositionConfirmed, setIsPositionConfirmed] = useState(false);
+
+  // YouTube video ID (you can change this to any video)
+  const YOUTUBE_VIDEO_ID = "9iV1SgG5MDA"; // Rick Roll for demo, replace with your video
 
   // Audio functions
   const playCountSound = (count) => {
@@ -682,6 +786,7 @@ const SquatChallengeApp = ({ onBack }) => {
   const canvasRef = useRef(null);
   const squatCounterRef = useRef(new SquatCounter());
   const fpsMonitorRef = useRef(new FPSMonitor());
+  const positionValidatorRef = useRef(new PositionValidator());
   const poseLandmarkerRef = useRef(null);
   const animationFrameRef = useRef(null);
   const timerRef = useRef(null);
@@ -807,7 +912,7 @@ const SquatChallengeApp = ({ onBack }) => {
       }
     }
 
-    // FIXED: Proper canvas sizing to match video exactly
+    // Proper canvas sizing to match video exactly
     const videoRect = video.getBoundingClientRect();
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -828,78 +933,24 @@ const SquatChallengeApp = ({ onBack }) => {
       if (results.landmarks && results.landmarks.length > 0) {
         const landmarks = results.landmarks[0];
         
+        // Handle position validation phase
+        if (phase === 'position-before-hydrate' || phase === 'position-before-recovery') {
+          const validation = positionValidatorRef.current.validatePosition(landmarks);
+          setPositionValidation(validation);
+          
+          if (validation.isValid && !isPositionConfirmed) {
+            setIsPositionConfirmed(true);
+            setTimeout(() => {
+              handlePhaseComplete(); // This will trigger the next phase
+            }, 1500);
+          }
+        }
+        
         if (phase === 'exercise') {
-          // FIXED: Draw skeleton with proper scaling to video dimensions
+          // Draw skeleton with proper scaling to video dimensions
           const drawingUtils = new DrawingUtils(canvasCtx);
           drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: '#FFFFFF', lineWidth: 2 });
           drawingUtils.drawLandmarks(landmarks, { color: '#FFFFFF', radius: 4 });
-          
-          // // FIXED: Debug info positioning - moved to bottom area to avoid overlap
-          // const leftHip = landmarks[23];
-          // const leftKnee = landmarks[25];
-          // const leftAnkle = landmarks[27];
-          // const rightHip = landmarks[24];
-          // const rightKnee = landmarks[26];
-          // const rightAnkle = landmarks[28];
-          
-          // if (leftHip && leftKnee && leftAnkle && rightHip && rightKnee && rightAnkle) {
-          //   const leftKneeAngle = squatCounterRef.current.calculateAngle(leftHip, leftKnee, leftAnkle);
-          //   const rightKneeAngle = squatCounterRef.current.calculateAngle(rightHip, rightKnee, rightAnkle);
-          //   const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
-          //   const kneeDifference = Math.abs(leftKneeAngle - rightKneeAngle);
-          //   const standingAngle = squatCounterRef.current.standingKneeAngle || 0;
-          //   const kneeBend = standingAngle - avgKneeAngle;
-            
-          //   // FIXED: Position debug text at bottom of canvas, smaller font
-          //   const fontSize = Math.max(10, canvas.width * 0.02); // Smaller responsive font
-          //   canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-          //   const debugBoxHeight = fontSize * 10; // Enough space for all debug lines
-          //   canvasCtx.fillRect(0, canvas.height - debugBoxHeight, canvas.width, debugBoxHeight);
-            
-          //   canvasCtx.fillStyle = '#FFFFFF';
-          //   canvasCtx.font = `${fontSize}px Arial`;
-            
-          //   const textX = 10;
-          //   const lineHeight = fontSize + 2;
-          //   let currentY = canvas.height - debugBoxHeight + lineHeight; // Start from bottom area
-            
-          //   canvasCtx.fillText(`L Knee: ${leftKneeAngle.toFixed(1)}°`, textX, currentY);
-          //   currentY += lineHeight;
-          //   canvasCtx.fillText(`R Knee: ${rightKneeAngle.toFixed(1)}°`, textX, currentY);
-          //   currentY += lineHeight;
-          //   canvasCtx.fillText(`Avg: ${avgKneeAngle.toFixed(1)}°`, textX, currentY);
-          //   currentY += lineHeight;
-          //   canvasCtx.fillText(`Difference: ${kneeDifference.toFixed(1)}°`, textX, currentY);
-          //   currentY += lineHeight;
-          //   canvasCtx.fillText(`Standing: ${standingAngle.toFixed(1)}°`, textX, currentY);
-          //   currentY += lineHeight;
-          //   canvasCtx.fillText(`Knee Bend: ${kneeBend.toFixed(1)}°`, textX, currentY);
-          //   currentY += lineHeight;
-          //   canvasCtx.fillText(`State: ${squatCounterRef.current.isDown ? 'DOWN' : 'UP'}`, textX, currentY);
-            
-          //   // FIXED: Draw angle indicators properly scaled to video
-          //   canvasCtx.fillStyle = '#FF0000';
-          //   canvasCtx.font = `${fontSize + 2}px Arial`;
-            
-          //   const leftKneeX = leftKnee.x * canvas.width;
-          //   const leftKneeY = leftKnee.y * canvas.height;
-          //   canvasCtx.fillText(`${leftKneeAngle.toFixed(1)}°`, leftKneeX + 5, leftKneeY);
-            
-          //   const rightKneeX = rightKnee.x * canvas.width;
-          //   const rightKneeY = rightKnee.y * canvas.height;
-          //   canvasCtx.fillText(`${rightKneeAngle.toFixed(1)}°`, rightKneeX - 50, rightKneeY);
-            
-          //   // Validation indicators in the debug area
-          //   currentY += lineHeight;
-          //   canvasCtx.fillStyle = kneeDifference <= 25 ? '#00FF00' : '#FF0000';
-          //   canvasCtx.fillText(`Both Knees: ${kneeDifference <= 25 ? 'OK' : 'NO'}`, textX, currentY);
-          //   currentY += lineHeight;
-            
-          //   if (standingAngle > 0) {
-          //     canvasCtx.fillStyle = kneeBend >= 30 ? '#00FF00' : '#FF0000';
-          //     canvasCtx.fillText(`Knee Bend: ≥30° (${kneeBend >= 30 ? 'OK' : 'NO'})`, textX, currentY);
-          //   }
-          // }
           
           // Process squat counting
           const result = squatCounterRef.current.processPose(landmarks);
@@ -925,7 +976,7 @@ const SquatChallengeApp = ({ onBack }) => {
       console.error('Error in pose detection:', error);
       animationFrameRef.current = requestAnimationFrame(detectPose);
     }
-  }, [webcamRunning, phase, currentRound, takeScreenshot, hasSquatPhoto]);
+  }, [webcamRunning, phase, currentRound, takeScreenshot, hasSquatPhoto, isPositionConfirmed]);
 
   useEffect(() => {
     if (webcamRunning) {
@@ -938,6 +989,13 @@ const SquatChallengeApp = ({ onBack }) => {
       }
     };
   }, [webcamRunning, detectPose]);
+
+  useEffect(() => {
+    if (phase === 'position-before-hydrate' || phase === 'position-before-recovery') {
+      setIsPositionConfirmed(false);
+      positionValidatorRef.current.reset();
+    }
+  }, [phase])
 
   // Timer logic with screenshot taking and audio announcements
   useEffect(() => {
@@ -995,7 +1053,12 @@ const SquatChallengeApp = ({ onBack }) => {
   }, [timeRemaining, phase]);
 
   const handlePhaseComplete = () => {
-    if (phase === 'hydrate') {
+    if (phase === 'position-before-hydrate') {
+      // Setelah validasi posisi sebelum hydrate, lanjut ke hydrate
+      setPhase('hydrate');
+      setTimeRemaining(10);
+      setProgressPercent(0);
+    } else if (phase === 'hydrate') {
       takeScreenshot('hydrate');
       setProgressPercent(100);
       setTimeout(() => {
@@ -1012,9 +1075,12 @@ const SquatChallengeApp = ({ onBack }) => {
     } else if (phase === 'exercise') {
       setProgressPercent(100);
       if (currentRound === 1) {
-        setPhase('recovery');
-        setTimeRemaining(10);
+        // Setelah exercise round 1, masuk ke position validation lagi
+        setPhase('position-before-recovery');
         setProgressPercent(0);
+        // Reset position validator untuk round 2
+        positionValidatorRef.current.reset();
+        setIsPositionConfirmed(false);
       } else {
         if (!hasSpokenCongratulations) {
           playAnnouncement('Congratulations! You finished your challenge!');
@@ -1024,6 +1090,11 @@ const SquatChallengeApp = ({ onBack }) => {
           setPhase('grid');
         }, 3000);
       }
+    } else if (phase === 'position-before-recovery') {
+      // Setelah validasi posisi sebelum recovery, lanjut ke recovery
+      setPhase('recovery');
+      setTimeRemaining(10);
+      setProgressPercent(0);
     } else if (phase === 'recovery') {
       takeScreenshot('recovery');
       setProgressPercent(100);
@@ -1044,8 +1115,7 @@ const SquatChallengeApp = ({ onBack }) => {
 
   const handleContinue = () => {
     if (isFpsCompatible) {
-      setPhase('hydrate');
-      setTimeRemaining(10);
+      setPhase('position-before-hydrate'); // Baru: fase position sebelum hydrate
       if (videoRef.current) {
         videoRef.current.play().catch(e => console.log('Video play error:', e));
       }
@@ -1092,26 +1162,26 @@ const SquatChallengeApp = ({ onBack }) => {
 
       {phase === 'setup' && (
         <div className="flex-1 flex flex-col">
-          {/* FIXED: Video Container with proper relative positioning for canvas overlay */}
+          {/* Video Container - Show YouTube video instead of webcam for setup */}
           <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
             aspectRatio: '3/4',
             maxHeight: 'calc(100vh - 200px)',
           }}>
+            <YouTubeVideo
+              videoId={YOUTUBE_VIDEO_ID}
+              className="w-full h-full object-cover rounded-lg"
+            />
+            {/* Hidden webcam for initialization */}
             <video
               ref={videoRef}
-              className="w-full h-full object-cover"
+              className="hidden"
               autoPlay
               playsInline
               muted
             />
             <canvas
               ref={canvasRef}
-              className="absolute top-0 left-0 pointer-events-none"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
+              className="hidden"
             />
           </div>
 
@@ -1122,14 +1192,14 @@ const SquatChallengeApp = ({ onBack }) => {
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${webcamRunning ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
                   {webcamRunning ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
                 </div>
-                <span className={`text-lg font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
+                <span className={`text-[24px] sm:text-[30px] font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isFpsCompatible ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
                   {isFpsCompatible ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
                 </div>
-                <span className={`text-lg font-semibold ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>FPS CHECK</span>
+                <span className={`text-[24px] sm:text-[30px] font-semibold ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>FPS CHECK</span>
               </div>
             </div>
             
@@ -1140,7 +1210,7 @@ const SquatChallengeApp = ({ onBack }) => {
             )}
           </div>
 
-          <div className="mx-4 mb-4 flex gap-4">
+          <div className="mx-4 -mt-4 mb-2 flex gap-4">
             <button
               onClick={onBack}
               className="flex-1 bg-transparent border border-gray-600 text-white py-3 px-6 rounded font-bold hover:bg-gray-800 transition-colors"
@@ -1162,9 +1232,101 @@ const SquatChallengeApp = ({ onBack }) => {
         </div>
       )}
 
+      {phase === 'position-before-hydrate' && (
+        <div className="flex-1 flex flex-col">
+          <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
+            aspectRatio: '3/4',
+            maxHeight: 'calc(100vh - 180px)', 
+          }}>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              autoPlay
+              playsInline
+              muted
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 pointer-events-none"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+
+            {/* Body outline overlay */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative w-3/5 h-4/5">
+                <img 
+                  src="./assets/Union.png"
+                  alt="Body Position Guide"
+                  className="w-full h-full object-contain opacity-60"
+                  style={{ 
+                    filter: `drop-shadow(0 0 4px ${positionValidation.isValid ? '#00FF00' : '#FF0000'}) brightness(${positionValidation.isValid ? '1.2' : '0.8'})`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className='mt-2 text-center'>
+            <p className="text-white text-[16px]">
+              Step back so your whole body is visible, then get into position to start the challenge
+            </p>
+          </div>
+        </div>
+      )}
+
+      {phase === 'position-before-recovery' && (
+        <div className="flex-1 flex flex-col">
+          <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
+            aspectRatio: '3/4',
+            maxHeight: 'calc(100vh - 180px)', 
+          }}>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              autoPlay
+              playsInline
+              muted
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 pointer-events-none"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+
+            {/* Body outline overlay */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative w-3/5 h-4/5">
+                <img 
+                  src="./assets/Union.png"
+                  alt="Body Position Guide"
+                  className="w-full h-full object-contain opacity-60"
+                  style={{ 
+                    filter: `drop-shadow(0 0 4px ${positionValidation.isValid ? '#00FF00' : '#FF0000'}) brightness(${positionValidation.isValid ? '1.2' : '0.8'})`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className='mt-2 text-center'>
+            <p className="text-white text-[16px]">
+              Step back so your whole body is visible, then get into position to start the challenge
+            </p>
+          </div>
+        </div>
+      )}
+
       {(phase === 'hydrate' || phase === 'exercise' || phase === 'recovery' || phase === 'go') && (
         <div className="flex-1 flex flex-col">
-          {/* FIXED: Video Container with proper relative positioning */}
+          {/* Video Container with proper relative positioning */}
           <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
             aspectRatio: '3/4',
             maxHeight: 'calc(100vh - 180px)', 
@@ -1188,7 +1350,7 @@ const SquatChallengeApp = ({ onBack }) => {
 
             {phase === 'go' && (
               <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                <div className="text-6xl font-bold text-[#FF0000] animate-pulse">GO!</div>
+                <div className="text-[120px] sm:text-[150px] font-bold text-[#FF0000] animate-pulse">GO!</div>
               </div>
             )}
 
@@ -1196,14 +1358,14 @@ const SquatChallengeApp = ({ onBack }) => {
             {phase === 'hydrate' && (
               <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
                 <div className="text-center relative">
-                  <div className="absolute -top-10 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
+                  <div className="absolute -top-17 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
                        style={{ 
-                         transform: `translateX(${progressPercent * 1.8}px)` 
+                         transform: `translateX(${progressPercent * 2.8}px)` 
                        }}>
                     <img 
                       src="./assets/BOTTLE 2.png" 
                       alt="Bottle" 
-                      className="w-full h-full object-contain"
+                      className="w-[44px] h-[74px] object-contain"
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
@@ -1216,16 +1378,16 @@ const SquatChallengeApp = ({ onBack }) => {
                     </div>
                   </div>
 
-                  <div className="relative bg-gray-800 text-white px-4 py-2 rounded mb-2 overflow-hidden">
+                  <div className="relative bg-black text-white px-4 py-2 rounded-[10px] mb-2 overflow-hidden">
                     <div 
                       className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
                       style={{ width: `${progressPercent}%` }}
                     />
-                    <span className="relative z-10 text-sm font-bold">HYDRATE AND ENERGIZE</span>
+                    <span className="relative z-10 text-[24px] font-bold">HYDRATE AND ENERGIZE</span>
                   </div>
-                  <div className="bg-black bg-opacity-80 text-white px-4 py-1 rounded inline-block">
+                  {/* <div className="bg-black bg-opacity-80 text-white px-4 py-1 rounded inline-block">
                     <span className="text-xs font-medium">BEFORE UNLOCK YOUR 100</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             )}
@@ -1233,14 +1395,14 @@ const SquatChallengeApp = ({ onBack }) => {
             {phase === 'recovery' && (
               <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
                 <div className="text-center relative">
-                  <div className="absolute -top-10 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
-                       style={{ 
-                         transform: `translateX(${progressPercent * 2.2}px)` 
-                       }}>
+                  <div className="absolute -top-17 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
+                    style={{ 
+                      transform: `translateX(${progressPercent * 2.9}px)` 
+                    }}>
                     <img 
                       src="./assets/BOTTLE 2.png" 
                       alt="Bottle" 
-                      className="w-full h-full object-contain"
+                      className="w-[44px] h-[74px] object-contain"
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
@@ -1253,37 +1415,47 @@ const SquatChallengeApp = ({ onBack }) => {
                     </div>
                   </div>
 
-                  <div className="relative bg-gray-800 text-white px-4 py-2 rounded mb-2 overflow-hidden">
+                  <div className="relative bg-black text-white px-4 py-2 rounded-[10px] mb-2 overflow-hidden">
                     <div 
                       className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
                       style={{ width: `${progressPercent}%` }}
                     />
-                    <span className="relative z-10 text-sm font-bold">RECOVER &amp; REPEAT STRONGER</span>
+                    <span className="relative z-10 text-[20px] font-bold">RECOVER &amp; REPEAT STRONGER</span>
                   </div>
-                  <div className="bg-black bg-opacity-80 text-white px-4 py-1 rounded inline-block">
+                  {/* <div className="bg-black bg-opacity-80 text-white px-4 py-1 rounded inline-block">
                     <span className="text-xs font-medium">IT'S TIME TO</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             )}
 
             {phase === 'exercise' && (
-              <div className="absolute inset-0 flex flex-col justify-end items-center pb-20">
-                <div className="text-center relative -ml-3">
-                  <div className="flex items-center justify-center gap-1">
-                    <div className="flex items-center">
-                      <span className="text-white text-lg font-bold tracking-wider transform -rotate-90 whitespace-nowrap origin-center">
+              <div className="absolute inset-0 flex flex-col justify-end items-center pb-10">
+                <div className="w-full px-4">
+                  {/* Full width counter container */}
+                  <div className="w-full rounded-lg p-4 flex items-center justify-between h-[100px]">
+                    
+                    {/* ROUND text - 40px font */}
+                    <div className="flex mt-5 h-full transform -rotate-90">
+                      <span className="text-white text-left text-[20px] sm:text-[22px] font-bold leading-none">
                         ROUND {currentRound}
                       </span>
                     </div>
                     
-                    <div className="text-6xl font-bold text-[#FF0000] leading-none mx-1">
-                      {squatCount}
+                    {/* Count number - 120px font */}
+                    <div className="flex items-center justify-center h-full">
+                      <span className="text-[#FF0000] text-[150px] font-bold leading-none">
+                        {squatCount}
+                      </span>
                     </div>
                     
-                    <div className="flex items-end pb-1 ml-1">
-                      <span className="text-[#FF0000] text-2xl font-bold leading-none">REP</span>
+                    {/* REP text - 50px font */}
+                    <div className="flex mt-5 ml-5 h-full">
+                      <span className="text-[#FF0000] text-right text-[50px] font-bold leading-none">
+                        REP
+                      </span>
                     </div>
+                    
                   </div>
                 </div>
               </div>
@@ -1291,7 +1463,7 @@ const SquatChallengeApp = ({ onBack }) => {
           </div>
 
           {/* Progress Bar */}
-          <div className="mx-4 mb-2">
+          <div className="mx-4">
             <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-[#FF0000] transition-all duration-1000 ease-linear"
@@ -1301,38 +1473,44 @@ const SquatChallengeApp = ({ onBack }) => {
           </div>
 
           {/* Timer */}
-          <div className="mb-6 mx-4">
-            {phase === 'hydrate' && (
+          
+          {phase === 'hydrate' && (
+            <div className="mx-4 -mt-5">
+              <div className="flex items-center justify-end gap-2">
+                <div className="text-white text-right mt-3">
+                  <div className="text-[16px] text-white font-bold">YOUR FIRST SET</div>
+                  <div className="text-[16px] text-white font-bold">BEGINS IN</div>
+                </div>
+                <div className="text-[80px] font-bold text-white">{timeRemaining}</div>
+              </div>
+            </div>
+          )}
+          
+          {phase === 'recovery' && (
+            <div className="mx-4 -mt-5">
               <div className="flex items-center justify-end gap-2">
                 <div className="text-white text-right">
-                  <div className="text-sm text-[#636363] font-bold">YOUR FIRST SET</div>
-                  <div className="text-sm text-[#636363] font-bold">BEGINS IN</div>
+                  <div className="text-[16px] text-white font-bold">YOUR 2nd SET</div>
+                  <div className="text-[16px] text-white font-bold">BEGINS IN</div>
                 </div>
-                <div className="text-5xl font-bold text-[#636363]">{timeRemaining}</div>
+                <div className="text-[80px] font-bold text-white">{timeRemaining}</div>
               </div>
-            )}
-            
-            {phase === 'recovery' && (
+            </div>
+          )}
+          
+          {phase === 'exercise' && (
+            <div className="mx-4 -mt-5">
               <div className="flex items-center justify-end gap-2">
                 <div className="text-white text-right">
-                  <div className="text-sm text-[#636363] font-bold">YOUR 2nd SET</div>
-                  <div className="text-sm text-[#636363] font-bold">BEGINS IN</div>
+                  <div className="text-[16px] text-white font-bold">TIME</div>
+                  <div className="text-[16px] text-white font-bold">REMAINING</div>
                 </div>
-                <div className="text-5xl font-bold text-[#636363]">{timeRemaining}</div>
+                <div className="text-[80px] font-bold text-white">{timeRemaining}</div>
               </div>
-            )}
-            
-            {phase === 'exercise' && (
-              <div className="flex items-center justify-end gap-2">
-                <div className="text-white text-right">
-                  <div className="text-sm text-[#636363] font-bold">TIME</div>
-                  <div className="text-sm text-[#636363] font-bold">REMAINING</div>
-                </div>
-                <div className="text-5xl font-bold text-[#636363]">{timeRemaining}</div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
+    
       )}
 
       {phase === 'completed' && (

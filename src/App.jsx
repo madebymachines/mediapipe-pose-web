@@ -80,12 +80,12 @@ const ExerciseMenu = ({ onSelectExercise }) => {
       </div>
 
       {/* Exercise Grid */}
-      <div className="flex-1 px-4 py-2 grid grid-cols-1 gap-4 -mt-5">
+      <div className="flex-1 px-4 grid grid-cols-1 gap-4 -mt-5">
         {exercises.map((exercise) => (
           <div
             key={exercise.id}
             onClick={() => onSelectExercise(exercise.id)}
-            className="bg-opacity-20 rounded-2xl p-4 cursor-pointer transform transition-all duration-200 hover:scale-105 hover:bg-opacity-30 active:scale-95"
+            className="bg-opacity-20 rounded-2xl p-4 cursor-pointer transform transition-all duration-200"
           >
             {/* GIF Container */}
             <div className="w-full h-80 mb-4 rounded-xl overflow-hidden bg-opacity-30 flex items-center justify-center">
@@ -106,7 +106,7 @@ const ExerciseMenu = ({ onSelectExercise }) => {
               <h3 className="text-white font-bold text-lg mb-1">
                 {exercise.name}
               </h3>
-              <p className="text-white text-sm opacity-80 mb-2">
+              <p className="text-white text-sm opacity-80">
                 {exercise.description}
               </p>
             </div>
