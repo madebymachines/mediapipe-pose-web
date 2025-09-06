@@ -1,3 +1,5 @@
+import { playAnnouncement } from './AudioUtils';
+
 // Position Validator Class
 export class PositionValidator {
   constructor() {
@@ -82,13 +84,8 @@ export class PositionValidator {
     // Speak "Perfect position" when close to valid but not yet confirmed
     if (this.validFrames >= 5 && !this.hasSpokenPositionGood) {
       this.hasSpokenPositionGood = true;
-      // Call speech function here
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance("Perfect position! Hold steady!");
-        utterance.rate = 1.0;
-        utterance.volume = 0.9;
-        speechSynthesis.speak(utterance);
-      }, 100);
+      // Use the improved audio system
+      playAnnouncement("Perfect position! Hold steady!");
     }
     
     if (this.validFrames >= this.requiredValidFrames) {

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Check, X } from 'lucide-react';
 import YouTubeVideo from './YoutubeVideo';
+import { enableAudio, testAudio } from '../utils/AudioUtils';
 
 // Setup Page Component
 const SetupPage = ({ 
@@ -12,6 +13,25 @@ const SetupPage = ({
   onContinue, 
   YOUTUBE_VIDEO_ID 
 }) => {
+  
+  // Enable audio when component mounts
+  useEffect(() => {
+    enableAudio();
+  }, []);
+
+  const handleContinue = async () => {
+    // Test audio before continuing
+    console.log('Testing audio before starting challenge...');
+    await testAudio();
+    onContinue();
+  };
+
+  const handleBack = () => {
+    // Enable audio on any user interaction
+    enableAudio();
+    onBack();
+  };
+
   return (
     <div className="flex-1 flex flex-col">
       {/* Video Container - Show YouTube video instead of webcam for setup */}
@@ -71,7 +91,7 @@ const SetupPage = ({
         // Show only BACK TO HOME button when device is not compatible
         <div className="mx-4 mb-2">
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="w-full bg-transparent border-2 border-white text-white py-4 px-6 rounded-[5px] font-bold text-lg hover:bg-white hover:text-black transition-colors"
           >
             BACK TO HOME
@@ -81,13 +101,13 @@ const SetupPage = ({
         // Show normal BACK and CONTINUE buttons when device is compatible
         <div className="mx-4 -mt-4 mb-2 flex gap-4">
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="flex-1 bg-transparent border border-gray-600 text-white py-3 px-6 rounded font-bold hover:bg-gray-800 transition-colors"
           >
             BACK
           </button>
           <button
-            onClick={onContinue}
+            onClick={handleContinue}
             disabled={!isFpsCompatible || !webcamRunning}
             className={`flex-1 py-3 px-6 rounded font-bold transition-colors ${
               isFpsCompatible && webcamRunning
