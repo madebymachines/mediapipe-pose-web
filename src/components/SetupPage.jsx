@@ -43,15 +43,6 @@ const SetupPage = ({
         overflow: 'hidden' // Cegah scrolling
       }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-center py-2 relative flex-shrink-0">
-        <img 
-          src="./assets/LOGO2 1.png" 
-          alt="Unlock Your 100 Logo" 
-          className="h-12 object-contain"
-        />
-      </div>
-
       {/* Video Container - Gunakan flex-1 dan remove margin bottom */}
       <div 
         className="relative mx-4 bg-gray-900 overflow-hidden rounded-lg flex-1"
