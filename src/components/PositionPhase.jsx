@@ -13,7 +13,7 @@ export const PositionBeforeHydrate = ({
       <div className="relative mx-8 bg-black overflow-hidden flex-1" 
       style={{ 
         aspectRatio: '9/16', 
-        maxHeight: 'calc(100vh - 140px)', 
+        maxHeight: 'calc(100vh - 160px)', 
         borderRadius: '5px',
       }}>
         <video
@@ -78,7 +78,7 @@ export const PositionBeforeRecovery = ({
     <div className="flex-1 flex flex-col">
       <div className="relative mx-8 mb-4 bg-black overflow-hidden" style={{ 
         aspectRatio: '9/16',
-        maxHeight: 'calc(100vh - 140px)',
+        maxHeight: 'calc(100vh - 160px)',
         borderRadius: '5px', 
       }}>
         <video
