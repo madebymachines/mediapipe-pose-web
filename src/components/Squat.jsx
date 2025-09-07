@@ -443,23 +443,27 @@ const SquatChallengeApp = ({ onBack }) => {
       )}
 
       {phase === 'position-before-hydrate' && (
-        <PositionBeforeHydrate
-          videoRef={videoRef}
-          canvasRef={canvasRef}
-          positionValidation={positionValidation}
-          bodyOutlineKey={bodyOutlineKey}
-          phase={phase}
-        />
+        <div className="flex-1 flex flex-col">
+          <PositionBeforeHydrate
+            videoRef={videoRef}
+            canvasRef={canvasRef}
+            positionValidation={positionValidation}
+            bodyOutlineKey={bodyOutlineKey}
+            phase={phase}
+          />
+        </div>
       )}
 
       {phase === 'position-before-recovery' && (
-        <PositionBeforeRecovery
-          videoRef={videoRef}
-          canvasRef={canvasRef}
-          positionValidation={positionValidation}
-          bodyOutlineKey={bodyOutlineKey}
-          phase={phase}
-        />
+        <div className="flex-1 flex flex-col">
+          <PositionBeforeRecovery
+            videoRef={videoRef}
+            canvasRef={canvasRef}
+            positionValidation={positionValidation}
+            bodyOutlineKey={bodyOutlineKey}
+            phase={phase}
+          />
+        </div>
       )}
 
       {phase === 'hydrate' && (
