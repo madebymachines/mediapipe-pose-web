@@ -10,7 +10,9 @@ export const HydratePhase = ({
     <div className="flex-1 flex flex-col">
       <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
         aspectRatio: '3/4',
-        maxHeight: 'calc(100vh - 180px)', 
+        maxHeight: 'calc(100vh - 200px)',
+        minHeight: '300px',
+        marginBottom: 0,
       }}>
         <video
           ref={videoRef}
@@ -34,7 +36,7 @@ export const HydratePhase = ({
           <div className="text-center relative">
             <div className="absolute -top-17 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
                  style={{ 
-                   transform: `translateX(${progressPercent * 2.8}px)` 
+                   transform: `translateX(${progressPercent * 2.0}px)` 
                  }}>
               <img 
                 src="./assets/BOTTLE 2.png" 
@@ -52,7 +54,8 @@ export const HydratePhase = ({
               </div>
             </div>
 
-            <div className="relative bg-black text-white px-4 py-2 rounded-[10px] mb-2 overflow-hidden">
+            <div className="relative bg-black text-white rounded-[10px] mb-2 overflow-hidden flex items-center justify-center" 
+                style={{ width: '240px', height: '45px' }}>
               <div 
                 className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
                 style={{ width: `${progressPercent}%` }}
@@ -75,7 +78,9 @@ export const RecoveryPhase = ({
     <div className="flex-1 flex flex-col">
       <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
         aspectRatio: '3/4',
-        maxHeight: 'calc(100vh - 180px)', 
+        maxHeight: 'calc(100vh - 200px)',
+        minHeight: '300px',
+        marginBottom: 0,
       }}>
         <video
           ref={videoRef}
@@ -99,7 +104,7 @@ export const RecoveryPhase = ({
           <div className="text-center relative">
             <div className="absolute -top-17 left-0 w-10 h-10 transform transition-transform duration-1000 ease-linear"
               style={{ 
-                transform: `translateX(${progressPercent * 2.9}px)` 
+                transform: `translateX(${progressPercent * 2.0}px)` 
               }}>
               <img 
                 src="./assets/BOTTLE 2.png" 
@@ -117,12 +122,13 @@ export const RecoveryPhase = ({
               </div>
             </div>
 
-            <div className="relative bg-black text-white px-4 py-2 rounded-[10px] mb-2 overflow-hidden">
+            <div className="relative bg-black text-white px-4 py-2 rounded-[10px] mb-2 overflow-hidden"
+              style={{ width: '240px', height: '45px' }}>
               <div 
                 className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
                 style={{ width: `${progressPercent}%` }}
               />
-              <span className="relative z-10 text-[20px] font-bold">RECOVER &amp; REPEAT STRONGER</span>
+              <span className="relative z-10 text-[30px] font-vancouver font-regular">RECOVER &amp; REPEAT</span>
             </div>
           </div>
         </div>
@@ -168,25 +174,24 @@ export const ExercisePhase = ({
               
               {/* ROUND text - 40px font */}
               <div className="flex mt-5 h-full transform -rotate-90">
-                <span className="text-white text-left text-[20px] sm:text-[22px] font-bold leading-none">
+                <span className="text-white text-left text-[40px] font-vancouver font-regular leading-none">
                   ROUND {currentRound}
                 </span>
               </div>
               
-              {/* Count number - 120px font */}
+              {/* Count number - 150px font */}
               <div className="flex items-center justify-center h-full">
-                <span className="text-[#FF0000] text-[150px] font-bold leading-none">
+                <span className="text-[#FF0000] text-[150px] font-vancouver font-regular leading-none">
                   {squatCount}
                 </span>
               </div>
               
               {/* REP text - 50px font */}
               <div className="flex mt-5 ml-5 h-full">
-                <span className="text-[#FF0000] text-right text-[50px] font-bold leading-none">
+                <span className="text-[#FF0000] text-right text-[50px] font-vancouver font-regular leading-none">
                   REP
                 </span>
               </div>
-              
             </div>
           </div>
         </div>

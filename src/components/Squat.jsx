@@ -192,19 +192,18 @@ const SquatChallengeApp = ({ onBack }) => {
         const landmarks = results.landmarks[0];
         
         // Handle position validation phase
-        if (phase === 'position-before-hydrate' || phase === 'position-before-recovery') {
-          const validation = positionValidatorRef.current.validatePosition(landmarks);
-          setPositionValidation(validation);
+        // if (phase === 'position-before-hydrate' || phase === 'position-before-recovery') {
+        //   const validation = positionValidatorRef.current.validatePosition(landmarks);
+        //   setPositionValidation(validation);
           
-          if (validation.isValid && !isPositionConfirmed) {
-            setIsPositionConfirmed(true);
-            // Beri jeda lebih lama untuk position before recovery
-            const delay = 3000
-            setTimeout(() => {
-              handlePhaseComplete(); // This will trigger the next phase
-            }, delay);
-          }
-        }
+        //   if (validation.isValid && !isPositionConfirmed) {
+        //     setIsPositionConfirmed(true);
+        //     const delay = 3000
+        //     setTimeout(() => {
+        //       handlePhaseComplete(); 
+        //     }, delay);
+        //   }
+        // }
         
         if (phase === 'exercise') {
           // Draw skeleton with proper scaling to video dimensions
@@ -250,14 +249,13 @@ const SquatChallengeApp = ({ onBack }) => {
     };
   }, [webcamRunning, detectPose]);
 
-  useEffect(() => {
-    if (phase === 'position-before-hydrate' || phase === 'position-before-recovery') {
-      setIsPositionConfirmed(false);
-      positionValidatorRef.current.reset();
-      // Reset body outline visual state
-      setBodyOutlineKey(prev => prev + 1);
-    }
-  }, [phase]);
+  // useEffect(() => {
+  //   if (phase === 'position-before-hydrate' || phase === 'position-before-recovery') {
+  //     setIsPositionConfirmed(false);
+  //     positionValidatorRef.current.reset();
+  //     setBodyOutlineKey(prev => prev + 1);
+  //   }
+  // }, [phase]);
 
   // Timer logic with screenshot taking and audio announcements
   useEffect(() => {
@@ -314,9 +312,73 @@ const SquatChallengeApp = ({ onBack }) => {
     setProgressPercent(Math.min(100, Math.max(0, progress)));
   }, [timeRemaining, phase]);
 
+  // const handlePhaseComplete = () => {
+  //   if (phase === 'position-before-hydrate') {
+  //     // Setelah validasi posisi sebelum hydrate, lanjut ke hydrate
+  //     setPhase('hydrate');
+  //     setTimeRemaining(10);
+  //     setProgressPercent(0);
+  //   } else if (phase === 'hydrate') {
+  //     takeScreenshot('hydrate');
+  //     setProgressPercent(100);
+  //     setTimeout(() => {
+  //       setPhase('go');
+  //       setTimeout(() => {
+  //         setPhase('exercise');
+  //         setTimeRemaining(50);
+  //         setProgressPercent(0);
+  //         squatCounterRef.current.resetCount();
+  //         setSquatCount(0);
+  //         setHasSquatPhoto(prev => ({ ...prev, [`round${currentRound}`]: false }));
+  //       }, 2000);
+  //     }, 1000);
+  //   } else if (phase === 'exercise') {
+  //     setProgressPercent(100);
+  //     if (currentRound === 1) {
+  //       // Setelah exercise round 1, langsung ke recovery (bukan position validation)
+  //       setPhase('recovery');
+  //       setTimeRemaining(10);
+  //       setProgressPercent(0);
+  //     } else {
+  //       if (!hasSpokenCongratulations) {
+  //         playAnnouncement('Congratulations! You finished your challenge!');
+  //         setHasSpokenCongratulations(true);
+  //       }
+  //       setTimeout(() => {
+  //         setPhase('grid');
+  //       }, 3000);
+  //     }
+  //   } else if (phase === 'recovery') {
+  //     takeScreenshot('recovery');
+  //     setProgressPercent(100);
+  //     setTimeout(() => {
+  //       // Setelah recovery selesai, BARU masuk ke position validation untuk round 2
+  //       setPhase('position-before-recovery');
+  //       setProgressPercent(0);
+  //       // Reset position validator untuk round 2
+  //       positionValidatorRef.current.reset();
+  //       setIsPositionConfirmed(false);
+  //     }, 1000);
+  //   } else if (phase === 'position-before-recovery') {
+  //     // Setelah validasi posisi sebelum round 2, langsung ke GO dan exercise round 2
+  //     setTimeout(() => {
+  //       setPhase('go');
+  //       setCurrentRound(2);
+  //       setTimeout(() => {
+  //         setPhase('exercise');
+  //         setTimeRemaining(50);
+  //         setProgressPercent(0);
+  //         squatCounterRef.current.resetCount();
+  //         setSquatCount(0);
+  //         setHasSquatPhoto(prev => ({ ...prev, [`round${currentRound}`]: false }));
+  //       }, 2000);
+  //     }, 3000);
+  //   }
+  // };
+
   const handlePhaseComplete = () => {
-    if (phase === 'position-before-hydrate') {
-      // Setelah validasi posisi sebelum hydrate, lanjut ke hydrate
+    if (phase === 'setup') {
+      // Langsung ke hydrate, skip position-before-hydrate
       setPhase('hydrate');
       setTimeRemaining(10);
       setProgressPercent(0);
@@ -337,7 +399,7 @@ const SquatChallengeApp = ({ onBack }) => {
     } else if (phase === 'exercise') {
       setProgressPercent(100);
       if (currentRound === 1) {
-        // Setelah exercise round 1, langsung ke recovery (bukan position validation)
+        // Langsung ke recovery, skip position validation
         setPhase('recovery');
         setTimeRemaining(10);
         setProgressPercent(0);
@@ -354,16 +416,7 @@ const SquatChallengeApp = ({ onBack }) => {
       takeScreenshot('recovery');
       setProgressPercent(100);
       setTimeout(() => {
-        // Setelah recovery selesai, BARU masuk ke position validation untuk round 2
-        setPhase('position-before-recovery');
-        setProgressPercent(0);
-        // Reset position validator untuk round 2
-        positionValidatorRef.current.reset();
-        setIsPositionConfirmed(false);
-      }, 1000);
-    } else if (phase === 'position-before-recovery') {
-      // Setelah validasi posisi sebelum round 2, langsung ke GO dan exercise round 2
-      setTimeout(() => {
+        // Langsung ke GO untuk round 2, skip position-before-recovery
         setPhase('go');
         setCurrentRound(2);
         setTimeout(() => {
@@ -374,13 +427,14 @@ const SquatChallengeApp = ({ onBack }) => {
           setSquatCount(0);
           setHasSquatPhoto(prev => ({ ...prev, [`round${currentRound}`]: false }));
         }, 2000);
-      }, 3000);
+      }, 1000);
     }
   };
 
   const handleContinue = () => {
     if (isFpsCompatible) {
-      setPhase('position-before-hydrate'); // Baru: fase position sebelum hydrate
+      // setPhase('position-before-hydrate'); 
+      setPhase('hydrate');
       if (videoRef.current) {
         videoRef.current.play().catch(e => console.log('Video play error:', e));
       }
