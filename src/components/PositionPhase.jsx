@@ -10,10 +10,10 @@ export const PositionBeforeHydrate = ({
 }) => {
   return (
     <div className="flex-1 flex flex-col">
-      <div className="relative mx-8 bg-black overflow-hidden flex-1" 
+      <div className="relative mx-4 bg-black overflow-hidden flex-1" 
       style={{ 
         aspectRatio: '9/16', 
-        maxHeight: 'calc(100vh - 160px)', 
+        maxHeight: 'calc(100vh - 180px)', 
         borderRadius: '5px',
       }}>
         <video
@@ -76,9 +76,9 @@ export const PositionBeforeRecovery = ({
 }) => {
   return (
     <div className="flex-1 flex flex-col">
-      <div className="relative mx-8 mb-4 bg-black overflow-hidden" style={{ 
+      <div className="relative mx-4 mb-4 bg-black overflow-hidden" style={{ 
         aspectRatio: '9/16',
-        maxHeight: 'calc(100vh - 160px)',
+        maxHeight: 'calc(100vh - 180px)',
         borderRadius: '5px', 
       }}>
         <video
@@ -120,7 +120,14 @@ export const PositionBeforeRecovery = ({
         </div>
       </div>
 
-      <div className='mt-2 text-center'>
+      <div 
+        className="mx-4 text-center flex-shrink-0"
+        style={{ 
+          paddingTop: '16px',
+          marginTop: 0,
+          marginBottom: 0
+        }}
+      >
         <p className="text-white text-[16px] font-urw-geometric font-regular">
           Get ready for your second round! Position yourself properly
         </p>
