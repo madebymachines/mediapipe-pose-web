@@ -1,0 +1,139 @@
+/* fonts.css - Global Font Configuration */
+
+/* Gravtrac Fonts */
+@font-face {
+  font-family: 'Gravtrac';
+  src: url('../assets/fonts/gravtrac condensed bd.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gravtrac';
+  src: url('../assets/fonts/gravtrac condensed bd.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* URW Geometric Fonts */
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricBlack.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricExtraBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricExtraLight.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricHeavy.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricLight.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricMedium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricRegular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricSemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'URW Geometric';
+  src: url('../assets/fonts/URWGeometricThin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Vancouver Fonts */
+@font-face {
+  font-family: 'Vancouver';
+  src: url('../assets/fonts/Vancouver-2.0.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vancouver Gothic';
+  src: url('../assets/fonts/Vancouver-Gothic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Global Font Classes */
+.font-gravtrac {
+  font-family: 'Gravtrac', sans-serif;
+}
+
+.font-urw-geometric {
+  font-family: 'URW Geometric', sans-serif;
+}
+
+.font-vancouver {
+  font-family: 'Vancouver', sans-serif;
+}
+
+.font-vancouver-gothic {
+  font-family: 'Vancouver Gothic', sans-serif;
+}
+
+/* Global Body Font (Optional) */
+body {
+  font-family: 'URW Geometric', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-weight: 400;
+}

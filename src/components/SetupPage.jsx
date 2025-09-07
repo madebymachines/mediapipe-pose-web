@@ -45,12 +45,13 @@ const SetupPage = ({
     >
       {/* Video Container - Gunakan flex-1 dan remove margin bottom */}
       <div 
-        className="relative mx-4 bg-gray-900 overflow-hidden rounded-lg flex-1"
+        className="relative mx-4 bg-transparent overflow-hidden rounded-lg flex-1"
         style={{ 
           aspectRatio: '3/4',
           maxHeight: 'calc(100vh - 200px)',
           minHeight: '300px',
-          marginBottom: 0 // Eksplisit set margin bottom ke 0
+          marginBottom: 0,
+          borderRadius: '5px',
         }}
       >
         <YouTubeVideo
@@ -83,19 +84,19 @@ const SetupPage = ({
           marginBottom: 0
         }}
       >
-        <div className="flex items-center justify-between gap-8">
+        <div className="flex items-center justify-center gap-8">
           <div className="flex items-center gap-2">
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${webcamRunning ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
-              {webcamRunning ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
+            <div className={`w-5 h-5 rounded-full border-2 mb-2 flex items-center justify-center ${webcamRunning ? 'border-[#00FF51]' : 'border-[#FFFFFF]'}`}>
+              {webcamRunning ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FFFFFF]" />}
             </div>
-            <span className={`text-[20px] sm:text-[24px] md:text-[30px] font-semibold ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>CAMERA</span>
+            <span className={`text-[30px] font-vancouver font-regular ${webcamRunning ? 'text-[#00FF51]' : 'text-[#FFFFFF]'}`}>CAMERA</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isFpsCompatible ? 'border-[#00FF51]' : 'border-[#FF0000]'}`}>
-              {isFpsCompatible ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FF0000]" />}
+            <div className={`w-5 h-5 rounded-full border-2 mb-2 flex items-center justify-center ${isFpsCompatible ? 'border-[#00FF51]' : 'border-[#FFFFFF]'}`}>
+              {isFpsCompatible ? <Check size={12} className="text-[#00FF51]" /> : <X size={12} className="text-[#FFFFFF]" />}
             </div>
-            <span className={`text-[20px] sm:text-[24px] md:text-[30px] font-semibold ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FF0000]'}`}>FPS CHECK</span>
+            <span className={`text-[30px] font-vancouver font-regular ${isFpsCompatible ? 'text-[#00FF51]' : 'text-[#FFFFFF]'}`}>FPS CHECK</span>
           </div>
         </div>
         
@@ -104,8 +105,8 @@ const SetupPage = ({
             className="text-white text-center bg-red-900/20 border border-red-500/30 rounded-lg p-4"
             style={{ marginTop: '16px' }}
           >
-            <div className="text-lg font-semibold mb-2">Sorry, Your device is not compatible.</div>
-            <div className="text-sm">Please find other device to do the challenge!</div>
+            <div className="text-[16px] font-urw-geometric font-regular mb-2">Sorry, Your device is not compatible.</div>
+            <div className="text-[16px] font-urw-geometric font-regular">Please find other device to do the challenge!</div>
           </div>
         )}
       </div>
@@ -123,7 +124,7 @@ const SetupPage = ({
         >
           <button
             onClick={handleBack}
-            className="w-full bg-transparent border-2 border-white text-white py-4 px-6 rounded-[5px] font-bold text-lg hover:bg-white hover:text-black transition-colors"
+            className="w-full bg-transparent border-2 border-white text-white py-4 px-6 rounded-[5px] text-[24px] font-vancouver font-regular hover:bg-white hover:text-black transition-colors"
           >
             BACK TO HOME
           </button>
@@ -140,14 +141,14 @@ const SetupPage = ({
         >
           <button
             onClick={handleBack}
-            className="flex-1 bg-transparent border border-gray-600 text-white py-3 px-6 rounded font-bold hover:bg-gray-800 transition-colors"
+            className="flex-1 bg-transparent border border-gray-600 text-white py-2 px-6 rounded text-[24px] font-vancouver font-regular hover:bg-gray-800 transition-colors"
           >
             BACK
           </button>
           <button
             onClick={handleContinue}
             disabled={!isFpsCompatible || !webcamRunning}
-            className={`flex-1 py-3 px-6 rounded font-bold transition-colors ${
+            className={`flex-1 py-2 px-6 rounded text-[24px] font-vancouver font-regular transition-colors ${
               isFpsCompatible && webcamRunning
                 ? 'bg-[#FF0000] text-white hover:bg-[#CC0000]'
                 : 'bg-gray-600 text-gray-400 cursor-not-allowed'

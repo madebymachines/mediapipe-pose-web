@@ -217,8 +217,8 @@ const YouTubeVideo = ({ videoId, className }) => {
           
           {/* Play Text */}
           <div className="text-white text-center">
-            <div className="text-lg font-bold mb-1 drop-shadow-lg">Watch with Sound</div>
-            <div className="text-sm bg-black bg-opacity-50 px-4 py-2 rounded-full backdrop-blur-sm">
+            <div className="text-lg font-urw-geometric font-regular mb-1 drop-shadow-lg">Watch with Sound</div>
+            <div className="text-sm font-urw-geometric font-regular bg-black bg-opacity-50 px-4 py-2 rounded-full backdrop-blur-sm">
               Tap to enable audio
             </div>
           </div>
@@ -258,7 +258,7 @@ const YouTubeVideo = ({ videoId, className }) => {
               ? 'bg-red-600 bg-opacity-80 text-white' 
               : 'bg-green-600 bg-opacity-80 text-white'
           }`}>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 font-urw-geometric font-regular">
               {isMuted ? (
                 <VolumeX className="w-3 h-3" />
               ) : (
@@ -274,7 +274,7 @@ const YouTubeVideo = ({ videoId, className }) => {
       {showPlayButton && thumbnailLoaded && (
         <div className="absolute bottom-4 left-4 z-15">
           <div className="bg-black bg-opacity-60 text-white text-xs px-3 py-2 rounded-full backdrop-blur-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 font-urw-geometric font-regular">
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
               <span>YouTube Video</span>
             </div>
