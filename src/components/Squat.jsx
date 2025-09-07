@@ -411,11 +411,16 @@ const SquatChallengeApp = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full bg-black text-white flex flex-col" style={{ 
-      maxWidth: '430px', 
-      margin: "0 auto",
-      minHeight: '100vh',
-    }}>
+    <div 
+      className="w-full bg-black text-white flex flex-col" 
+      style={{ 
+        maxWidth: '430px', 
+        margin: "0 auto",
+        minHeight: '100vh',
+        height: '100vh', // Tambahkan height eksplisit untuk konsistensi Safari
+        overflow: 'hidden' // Cegah scrolling yang tidak diinginkan
+      }}
+    >
       {/* Header */}
       <div className="flex items-center justify-center py-2 relative flex-shrink-0">
         <img 
@@ -466,7 +471,7 @@ const SquatChallengeApp = ({ onBack }) => {
           />
           
           {/* Progress Bar */}
-          <div className="mx-4">
+          <div className="mx-4 flex-shrink-0">
             <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-[#FF0000] transition-all duration-1000 ease-linear"
@@ -488,7 +493,7 @@ const SquatChallengeApp = ({ onBack }) => {
           />
           
           {/* Progress Bar */}
-          <div className="mx-4">
+          <div className="mx-4 flex-shrink-0">
             <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-[#FF0000] transition-all duration-1000 ease-linear"
@@ -511,7 +516,7 @@ const SquatChallengeApp = ({ onBack }) => {
           />
           
           {/* Progress Bar */}
-          <div className="mx-4">
+          <div className="mx-4 flex-shrink-0">
             <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-[#FF0000] transition-all duration-1000 ease-linear"
