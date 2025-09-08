@@ -276,8 +276,10 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
   };
 
   return (
-    <div className="w-full min-h-screen bg-black text-white flex flex-col" style={{ maxWidth: 430, margin: "0 auto" }}>
-      <div className="flex-1 flex flex-col items-center justify-center">
+    <div className="w-full min-h-screen bg-black text-white flex flex-col" 
+      style={{ maxWidth: 430, margin: "0 auto" }}
+      >
+      <div className="flex-1 mx-4 flex flex-col items-center justify-center">
         <div>
           <canvas 
             ref={canvasRef} 
@@ -295,9 +297,9 @@ const GridPhotoPage = ({ photos, totalSquats, round1Count, round2Count, onBack, 
 
         <button
           onClick={handleShare}
-          className="bg-[#FF0000] -mt-10 w-full text-white py-3 px-8 rounded-[5PX] font-bold hover:bg-[#FF0000] transition-colors flex items-center justify-center"
+          className="bg-[#FF0000] -mt-10 w-full text-white py-2 px-8 rounded-[5px] font-bold hover:bg-[#FF0000] transition-colors flex items-center justify-center"
         >
-          <span className="text-white">SHARE TO COLLECT POINTS</span>
+          <span className="text-white text-[24px] font-vancouver font-regular">SHARE TO COLLECT POINTS</span>
         </button>
       </div>
     </div>

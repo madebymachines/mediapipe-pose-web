@@ -124,7 +124,7 @@ export const RecoveryPhase = ({
               </div>
             </div>
 
-            <div className="relative bg-black text-white px-4 py-2 rounded-[10px] mb-2 overflow-hidden"
+            <div className="relative bg-black text-white rounded-[10px] mb-2 overflow-hidden flex items-center justify-center" 
               style={{ width: '240px', height: '45px' }}>
               <div 
                 className="absolute inset-0 bg-[#FF0000] transition-all duration-1000 ease-linear"
@@ -174,26 +174,30 @@ export const ExercisePhase = ({
         {/* Exercise counter overlay */}
         <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
           <div className="w-full px-4">
-            {/* Full width counter container */}
-            <div className="w-full rounded-lg p-4 flex items-center justify-between h-[100px]">
+            {/* Full width counter container - Changed to relative positioning */}
+            <div className="relative w-full rounded-lg p-4 h-[100px]">
               
-              {/* ROUND text - 40px font */}
-              <div className="flex h-full transform -rotate-90">
-                <span className="text-white text-left text-[40px] font-vancouver font-regular leading-none">
+              {/* ROUND text - positioned absolutely to left */}
+              <div className="absolute left-4 bottom-0 transform -rotate-90 origin-bottom-left" 
+                   style={{ 
+                     transformOrigin: 'left bottom',
+                     marginLeft: '40px'
+                   }}>
+                <span className="text-white text-[40px] font-vancouver font-regular leading-none">
                   ROUND {currentRound}
                 </span>
               </div>
               
-              {/* Count number - 150px font */}
-              <div className="flex items-center justify-center h-full">
+              {/* Count number - centered absolutely */}
+              <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-[#FF0000] text-[150px] font-vancouver font-regular leading-none">
                   {squatCount}
                 </span>
               </div>
               
-              {/* REP text - 50px font */}
-              <div className="flex mt-5 ml-5 h-full">
-                <span className="text-[#FF0000] text-right text-[50px] font-vancouver font-regular leading-none">
+              {/* REP text - positioned absolutely to right */}
+              <div className="absolute right-4 bottom-0 flex items-end h-full">
+                <span className="text-[#FF0000] text-[50px] font-vancouver font-regular leading-none">
                   REP
                 </span>
               </div>
