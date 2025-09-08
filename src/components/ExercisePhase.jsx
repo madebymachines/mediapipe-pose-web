@@ -12,7 +12,8 @@ export const HydratePhase = ({
         aspectRatio: '3/4',
         maxHeight: 'calc(100vh - 200px)',
         minHeight: '300px',
-        marginBottom: 0,
+        marginBottom: '20px',
+        borderRadius: '5px'
       }}>
         <video
           ref={videoRef}
@@ -80,7 +81,8 @@ export const RecoveryPhase = ({
         aspectRatio: '3/4',
         maxHeight: 'calc(100vh - 200px)',
         minHeight: '300px',
-        marginBottom: 0,
+        marginBottom: '20px',
+        borderRadius: '5px'
       }}>
         <video
           ref={videoRef}
@@ -147,7 +149,10 @@ export const ExercisePhase = ({
     <div className="flex-1 flex flex-col">
       <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
         aspectRatio: '3/4',
-        maxHeight: 'calc(100vh - 180px)', 
+        maxHeight: 'calc(100vh - 200px)',
+        minHeight: '300px',
+        marginBottom: '20px',
+        borderRadius: '5px'
       }}>
         <video
           ref={videoRef}
@@ -167,13 +172,13 @@ export const ExercisePhase = ({
         />
 
         {/* Exercise counter overlay */}
-        <div className="absolute inset-0 flex flex-col justify-end items-center pb-10">
+        <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
           <div className="w-full px-4">
             {/* Full width counter container */}
             <div className="w-full rounded-lg p-4 flex items-center justify-between h-[100px]">
               
               {/* ROUND text - 40px font */}
-              <div className="flex mt-5 h-full transform -rotate-90">
+              <div className="flex h-full transform -rotate-90">
                 <span className="text-white text-left text-[40px] font-vancouver font-regular leading-none">
                   ROUND {currentRound}
                 </span>
@@ -208,7 +213,10 @@ export const GoPhase = ({
     <div className="flex-1 flex flex-col">
       <div className="relative mx-4 mb-4 bg-transparent overflow-hidden" style={{ 
         aspectRatio: '3/4',
-        maxHeight: 'calc(100vh - 180px)', 
+        maxHeight: 'calc(100vh - 200px)',
+        minHeight: '300px',
+        marginBottom: '20px',
+        borderRadius: '5px'
       }}>
         <video
           ref={videoRef}
@@ -229,7 +237,7 @@ export const GoPhase = ({
 
         {/* GO overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-          <div className="text-[120px] sm:text-[150px] font-bold text-[#FF0000] animate-pulse">GO!</div>
+          <div className="text-[120px] sm:text-[150px] font-vancouver font-regular text-[#FF0000] animate-pulse">GO!</div>
         </div>
       </div>
     </div>
