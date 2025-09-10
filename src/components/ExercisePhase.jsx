@@ -178,7 +178,7 @@ export const ExercisePhase = ({
             <div className="relative w-full rounded-lg p-4 h-[100px]">
               
               {/* ROUND text - positioned absolutely to left */}
-              <div className="absolute left-4 bottom-0 transform -rotate-90 origin-bottom-left" 
+              <div className="absolute left-4 bottom-1 transform -rotate-90 origin-bottom-left" 
                    style={{ 
                      transformOrigin: 'left bottom',
                      marginLeft: '40px'
@@ -189,14 +189,14 @@ export const ExercisePhase = ({
               </div>
               
               {/* Count number - centered absolutely */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[#FF0000] text-[150px] font-vancouver font-regular leading-none">
+              <div className="absolute inset-0 flex items-center justify-center mt-4">
+                <span className="text-[#FF0000] text-[120px] font-vancouver font-regular leading-none">
                   {squatCount}
                 </span>
               </div>
               
               {/* REP text - positioned absolutely to right */}
-              <div className="absolute right-4 bottom-0 flex items-end h-full">
+              <div className="absolute right-4 bottom-0 flex items-end -mt-4">
                 <span className="text-[#FF0000] text-[50px] font-vancouver font-regular leading-none">
                   REP
                 </span>
